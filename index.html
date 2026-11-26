@@ -7,19 +7,38 @@
     <style>
         body { font-family: sans-serif; margin: 0; padding: 12px; background: #f0f2f5; }
         .card { background: #fff; padding: 14px; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 460px; margin: 0 auto; }
-        #map { height: 310px; background: #e5e9ec; border-radius: 12px; margin-bottom: 12px; border: 2px solid #b0c4de; position: relative; overflow: hidden; z-index: 1; }
+        #map-box { height: 310px; background: #e5e9ec; border-radius: 12px; margin-bottom: 12px; border: 2px solid #b0c4de; position: relative; overflow: hidden; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); width: 100%; height: 100%; pointer-events: none; }
+        .grid img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .pin { position: absolute; font-size: 28px; transform: translate(-50%, -50%); pointer-events: none; z-index: 5; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5)); }
+        #car { transition: left 0.15s linear, top 0.15s linear; display: none; z-index: 6; font-size: 30px; }
         .row { display: flex; gap: 8px; margin-bottom: 10px; }
-        button { flex: 1; padding: 12px 6px; border: 2px solid #ddd; border-radius: 10px; background: #fff; font-size: 13px; font-weight: bold; cursor: pointer; }
+        button { flex: 1; padding: 12px 6px; border: 2px solid #ddd; border-radius: 10px; background: #fff; font-size: 13px; font-weight: bold; }
         button.active { border-color: #ffcc00; background: #fff9db; }
         .order-btn { width: 100%; background: #ffcc00; border: none; padding: 15px; font-size: 16px; border-radius: 12px; }
-        #log { font-size: 11px; color: #666; text-align: center; margin-top: 8px; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <div id="status" style="margin-bottom: 10px; font-weight: bold; text-align: center;">Нажмите на карту для Точки А</div>
-    <div id="map"></div>
+
+    <div id="map-box" onclick="tapMap(event)">
+        <div class="grid">
+            <img src="https://2gis.com">
+            <img src="https://2gis.com">
+            <img src="https://2gis.com">
+            <img src="https://2gis.com">
+            <img src="https://2gis.com">
+            <img src="https://2gis.com">
+            <img src="https://2gis.com">
+            <img src="https://2gis.com">
+            <img src="https://2gis.com">
+        </div>
+        <div id="pinA" class="pin" style="left: 30%; top: 65%;">🟢</div>
+        <div id="pinB" class="pin" style="left: 70%; top: 30%;">🔴</div>
+        <div id="car" class="pin">🚕</div>
+    </div>
 
     <div class="row">
         <button id="bA" class="active" onclick="setM('A')">🟢 Точка А</button>
@@ -28,141 +47,48 @@
 
     <div class="row">
         <button id="t1" class="active" onclick="setT('t1')">Эконом<br><span id="p1">150 ₽</span></button>
-        <button id="t2" class="active" onclick="setT('t2')">Комфорт<br><span id="p2">225 ₽</span></button>
+        <button id="t2" onclick="setT('t2')">Комфорт<br><span id="p2">225 ₽</span></button>
     </div>
 
     <button id="orderBtn" class="order-btn" onclick="go()">Заказать такси</button>
-    <div id="log">Подключение...</div>
 </div>
 
 <script>
-    var m = 'A', map, pA, pB, mkA, mkB, ln, car, tmr;
-    
-    // Список запасных серверов для движка карты
-    var cdns = new Array(
-        'https://cloudflare.com',
-        'https://jsdelivr.net',
-        'https://unpkg.com'
-    );
-    var cdnIdx = 0;
-
-    // Список серверов самих карт (переключаются автоматически при ошибке)
-    var tileProviders = new Array(
-        { name: '2ГИС', url: 'https://2gis.com{x}&y={y}&z={z}&v=1' },
-        { name: 'ArcGIS', url: 'https://arcgisonline.com{z}/{y}/{x}' },
-        { name: 'CartoDB', url: 'https://cartocdn.com{z}/{x}/{y}.png' },
-        { name: 'OpenStreetMap', url: 'https://openstreetmap.org{z}/{x}/{y}.png' }
-    );
-    var tileIdx = 0, currentLayer = null, tileOk = false;
-
-    function loadLeaflet() {
-        if (cdnIdx >= cdns.length) {
-            document.getElementById('log').innerText = 'Сеть блокирует все внешние библиотеки (проверьте интернет или VPN)';
-            return;
-        }
-        var base = cdns.slice(cdnIdx, cdnIdx + 1);
-        document.getElementById('log').innerText = 'Пробуем сервер движка ' + (cdnIdx + 1) + ' из 3...';
-
-        var css = document.createElement('link');
-        css.rel = 'stylesheet';
-        css.href = base + 'leaflet.css';
-        document.head.appendChild(css);
-
-        var js = document.createElement('script');
-        js.src = base + 'leaflet.js';
-        js.onerror = function() {
-            cdnIdx++;
-            loadLeaflet();
-        };
-        js.onload = function() {
-            if (typeof L !== 'undefined') {
-                initMap();
-            } else {
-                cdnIdx++;
-                loadLeaflet();
-            }
-        };
-        document.head.appendChild(js);
-    }
-
-    function switchTileProvider() {
-        if (tileIdx >= tileProviders.length) {
-            document.getElementById('log').innerText = 'Все 4 сервера карт заблокированы сетью/провайдером';
-            return;
-        }
-        var prov = tileProviders.slice(tileIdx, tileIdx + 1);
-        // Извлекаем объект из массива без квадратных скобок
-        var pObj = prov.pop();
-        document.getElementById('log').innerText = 'Грузим улицы: ' + pObj.name + '...';
-
-        if (currentLayer) map.removeLayer(currentLayer);
-        tileOk = false;
-
-        currentLayer = L.tileLayer(pObj.url, { maxZoom: 18 });
-        currentLayer.on('tileload', function() {
-            tileOk = true;
-            document.getElementById('log').innerText = 'Карта активна (' + pObj.name + ')';
-        });
-        currentLayer.on('tileerror', function() {
-            if (!tileOk) {
-                tileIdx++;
-                switchTileProvider();
-            }
-        });
-        currentLayer.addTo(map);
-    }
-
-    function initMap() {
-        setM('A');
-        setT('t1');
-
-        pA = L.latLng(56.4426, 60.1819);
-        pB = L.latLng(56.4530, 60.1980);
-
-        map = L.map('map').setView(pA, 14);
-        switchTileProvider();
-
-        mkA = L.circleMarker(pA, { radius: 10, color: '#1e8449', fillColor: '#2ecc71', fillOpacity: 1 }).addTo(map);
-        mkB = L.circleMarker(pB, { radius: 10, color: '#922b21', fillColor: '#e74c3c', fillOpacity: 1 }).addTo(map);
-        ln = L.polyline(new Array(pA, pB), { color: '#222', weight: 4, dashArray: '6, 8' }).addTo(map);
-
-        setTimeout(function() { map.invalidateSize(); }, 300);
-
-        map.on('click', function(e) {
-            if (m === 'A') {
-                pA = e.latlng;
-                mkA.setLatLng(pA);
-                setM('B');
-            } else {
-                pB = e.latlng;
-                mkB.setLatLng(pB);
-            }
-            ln.setLatLngs(new Array(pA, pB));
-            var km = (map.distance(pA, pB) * 1.3) / 1000;
-            var pr = Math.max(100, Math.round(80 + km * 28));
-            document.getElementById('p1').innerText = pr + ' ₽';
-            document.getElementById('p2').innerText = Math.round(pr * 1.5) + ' ₽';
-        });
-    }
-
+    var m = 'A', pA = {x: 30, y: 65}, pB = {x: 70, y: 30}, tmr = null;
     function setM(v) {
         m = v;
         document.getElementById('bA').className = v === 'A' ? 'active' : '';
         document.getElementById('bB').className = v === 'B' ? 'active' : '';
         document.getElementById('status').innerText = v === 'A' ? 'Нажмите на карту для Точки А' : 'Нажмите на карту для Точки Б';
     }
-
     function setT(id) {
         document.getElementById('t1').className = id === 't1' ? 'active' : '';
         document.getElementById('t2').className = id === 't2' ? 'active' : '';
     }
-
+    function tapMap(e) {
+        var r = document.getElementById('map-box').getBoundingClientRect();
+        var x = Math.round(((e.clientX - r.left) / r.width) * 100);
+        var y = Math.round(((e.clientY - r.top) / r.height) * 100);
+        if (m === 'A') {
+            pA = {x: x, y: y};
+            document.getElementById('pinA').style.left = x + '%';
+            document.getElementById('pinA').style.top = y + '%';
+            setM('B');
+        } else {
+            pB = {x: x, y: y};
+            document.getElementById('pinB').style.left = x + '%';
+            document.getElementById('pinB').style.top = y + '%';
+        }
+        var d = Math.sqrt(Math.pow(pB.x - pA.x, 2) + Math.pow(pB.y - pA.y, 2));
+        var pr = Math.max(100, Math.round(80 + d * 2));
+        document.getElementById('p1').innerText = pr + ' ₽';
+        document.getElementById('p2').innerText = Math.round(pr * 1.5) + ' ₽';
+    }
     function go() {
-        if (!map) return;
         var btn = document.getElementById('orderBtn');
         if (btn.innerText === 'Отменить заказ') {
             clearInterval(tmr);
-            if (car) map.removeLayer(car);
+            document.getElementById('car').style.display = 'none';
             btn.innerText = 'Заказать такси';
             setM('A');
             return;
@@ -171,12 +97,15 @@
         setTimeout(function() {
             btn.innerText = 'Отменить заказ';
             document.getElementById('status').innerText = 'Машина выехала к точке А!';
-            var sx = pA.lat + 0.006, sy = pA.lng + 0.006;
-            car = L.circleMarker(L.latLng(sx, sy), { radius: 11, color: '#b7950b', fillColor: '#ffcc00', fillOpacity: 1 }).addTo(map);
+            var c = document.getElementById('car');
+            var sx = pA.x > 50 ? pA.x - 25 : pA.x + 25;
+            var sy = pA.y > 50 ? pA.y - 25 : pA.y + 25;
+            c.style.left = sx + '%'; c.style.top = sy + '%'; c.style.display = 'block';
             var s = 0;
             tmr = setInterval(function() {
                 s++;
-                car.setLatLng(L.latLng(sx + (pA.lat - sx) * (s / 25), sy + (pA.lng - sy) * (s / 25)));
+                c.style.left = (sx + (pA.x - sx) * (s / 25)) + '%';
+                c.style.top = (sy + (pA.y - sy) * (s / 25)) + '%';
                 if (s >= 25) {
                     clearInterval(tmr);
                     document.getElementById('status').innerText = 'Водитель на месте! Выходите';
@@ -184,9 +113,6 @@
             }, 150);
         }, 1200);
     }
-
-    window.onload = loadLeaflet;
 </script>
 </body>
 </html>
- 
