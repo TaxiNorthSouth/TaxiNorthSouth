@@ -24,17 +24,7 @@
     <div id="status" style="margin-bottom: 10px; font-weight: bold; text-align: center;">Нажмите на карту для Точки А</div>
 
     <div id="map-box" onclick="tapMap(event)">
-        <div class="grid">
-            <img src="https://2gis.com">
-            <img src="https://2gis.com">
-            <img src="https://2gis.com">
-            <img src="https://2gis.com">
-            <img src="https://2gis.com">
-            <img src="https://2gis.com">
-            <img src="https://2gis.com">
-            <img src="https://2gis.com">
-            <img src="https://2gis.com">
-        </div>
+        <div class="grid" id="grid"></div>
         <div id="pinA" class="pin" style="left: 30%; top: 65%;">🟢</div>
         <div id="pinB" class="pin" style="left: 70%; top: 30%;">🔴</div>
         <div id="car" class="pin">🚕</div>
@@ -54,6 +44,37 @@
 </div>
 
 <script>
+    var xs = new Array(10930, 10931, 10932);
+    var ys = new Array(5064, 5065, 5066);
+    var grid = document.getElementById('grid');
+
+    for (var r = 0; r < 3; r++) {
+        for (var c = 0; c < 3; c++) {
+            var x = Number(xs.slice(c, c + 1));
+            var y = Number(ys.slice(r, r + 1));
+            var img = document.createElement('img');
+            img.referrerPolicy = 'no-referrer';
+            img.setAttribute('data-x', x);
+            img.setAttribute('data-y', y);
+            img.setAttribute('data-step', '0');
+            // 1. ArcGIS (работает без Referer и ключей)
+            img.src = 'https://arcgisonline.com' + y + '/' + x;
+            img.onerror = function() {
+                var st = this.getAttribute('data-step');
+                var tx = this.getAttribute('data-x');
+                var ty = this.getAttribute('data-y');
+                if (st === '0') {
+                    this.setAttribute('data-step', '1');
+                    this.src = 'https://openstreetmap.de' + tx + '/' + ty + '.png';
+                } else if (st === '1') {
+                    this.setAttribute('data-step', '2');
+                    this.src = 'https://openstreetmap.fr' + tx + '/' + ty + '.png';
+                }
+            };
+            grid.appendChild(img);
+        }
+    }
+
     var m = 'A', pA = {x: 30, y: 65}, pB = {x: 70, y: 30}, tmr = null;
     function setM(v) {
         m = v;
