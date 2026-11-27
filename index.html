@@ -20,14 +20,14 @@ function ll(x,y){var n=1<<z,a=Math.PI-2*Math.PI*y/(n*256);return{la:180/Math.PI*
 function zm(d){var mx=(pr==2?15:18);z=Math.max(11,Math.min(mx,z+d));function sendOrd(){
   var fr=aA.value.trim(),to=aB.value.trim();
   var data=JSON.stringify({fr:fr,to:to,tar:t1.classList.contains('on')?'econom':'comfort',pr:t1.classList.contains('on')?p1.textContent:p2.textContent,laA:laA,lnA:lnA,laB:laB,lnB:lnB});
-  if(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData){Telegram.WebApp.sendData(data);}
+  if(window.Telegram&&Telegram.WebApp){Telegram.WebApp.ready();Telegram.WebApp.sendData(data);}
   else{st.textContent='Откройте карту через кнопку в Telegram-боте!';}
 }
 draw();}
 function setP(v){pr=v;b1.classList.toggle('on',v==1);b2.classList.toggle('on',v==2);if(v==2){if(z>15)z=15;}function sendOrd(){
   var fr=aA.value.trim(),to=aB.value.trim();
   var data=JSON.stringify({fr:fr,to:to,tar:t1.classList.contains('on')?'econom':'comfort',pr:t1.classList.contains('on')?p1.textContent:p2.textContent,laA:laA,lnA:lnA,laB:laB,lnB:lnB});
-  if(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData){Telegram.WebApp.sendData(data);}
+  if(window.Telegram&&Telegram.WebApp){Telegram.WebApp.ready();Telegram.WebApp.sendData(data);}
   else{st.textContent='Откройте карту через кнопку в Telegram-боте!';}
 }
 draw();}
@@ -70,7 +70,7 @@ function findAdr(who){
     function sendOrd(){
   var fr=aA.value.trim(),to=aB.value.trim();
   var data=JSON.stringify({fr:fr,to:to,tar:t1.classList.contains('on')?'econom':'comfort',pr:t1.classList.contains('on')?p1.textContent:p2.textContent,laA:laA,lnA:lnA,laB:laB,lnB:lnB});
-  if(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData){Telegram.WebApp.sendData(data);}
+  if(window.Telegram&&Telegram.WebApp){Telegram.WebApp.ready();Telegram.WebApp.sendData(data);}
   else{st.textContent='Откройте карту через кнопку в Telegram-боте!';}
 }
 draw();calc();
@@ -83,7 +83,7 @@ function upd(la,ln){
   function sendOrd(){
   var fr=aA.value.trim(),to=aB.value.trim();
   var data=JSON.stringify({fr:fr,to:to,tar:t1.classList.contains('on')?'econom':'comfort',pr:t1.classList.contains('on')?p1.textContent:p2.textContent,laA:laA,lnA:lnA,laB:laB,lnB:lnB});
-  if(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData){Telegram.WebApp.sendData(data);}
+  if(window.Telegram&&Telegram.WebApp){Telegram.WebApp.ready();Telegram.WebApp.sendData(data);}
   else{st.textContent='Откройте карту через кнопку в Telegram-боте!';}
 }
 draw();calc();
@@ -119,7 +119,7 @@ w.onpointerdown=function(e){sx=e.clientX;sy=e.clientY;mv=0;sla=cLa;sln=cLn;};
 w.onpointermove=function(e){if(sx){var dx=e.clientX-sx,dy=e.clientY-sy;if(Math.abs(dx)>6)mv=1;if(Math.abs(dy)>6)mv=1;if(mv){var c=px(sla,sln),p=ll(c.x-dx,c.y-dy);cLa=p.la;cLn=p.ln;function sendOrd(){
   var fr=aA.value.trim(),to=aB.value.trim();
   var data=JSON.stringify({fr:fr,to:to,tar:t1.classList.contains('on')?'econom':'comfort',pr:t1.classList.contains('on')?p1.textContent:p2.textContent,laA:laA,lnA:lnA,laB:laB,lnB:lnB});
-  if(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData){Telegram.WebApp.sendData(data);}
+  if(window.Telegram&&Telegram.WebApp){Telegram.WebApp.ready();Telegram.WebApp.sendData(data);}
   else{st.textContent='Откройте карту через кнопку в Telegram-боте!';}
 }
 draw();}}};
@@ -127,7 +127,7 @@ w.onpointerup=function(e){if(sx){if(mv==0){var r=w.getBoundingClientRect(),c=px(
 function sendOrd(){
   var fr=aA.value.trim(),to=aB.value.trim();
   var data=JSON.stringify({fr:fr,to:to,tar:t1.classList.contains('on')?'econom':'comfort',pr:t1.classList.contains('on')?p1.textContent:p2.textContent,laA:laA,lnA:lnA,laB:laB,lnB:lnB});
-  if(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData){Telegram.WebApp.sendData(data);}
+  if(window.Telegram&&Telegram.WebApp){Telegram.WebApp.ready();Telegram.WebApp.sendData(data);}
   else{st.textContent='Откройте карту через кнопку в Telegram-боте!';}
 }
 draw();getGps();
