@@ -19,8 +19,9 @@ body{font-family:sans-serif;margin:0;padding:8px;background:#f0f2f5}
 <body>
 <div class="c">
 <div class="r">
-<button class="b on" id="b1" onclick="setP(1)">ArcGIS</button>
-<button class="b" id="b2" onclick="setP(2)">OSM</button>
+<button class="b on" id="b1" onclick="setP(1)">2ГИС</button>
+<button class="b" id="b2" onclick="setP(2)">ArcGIS</button>
+<button class="b" id="b3" onclick="setP(3)">OSM</button>
 </div>
 <div id="st" style="text-align:center;font-weight:700;margin-bottom:6px">Точка А: нажмите на карту</div>
 <div id="w">
@@ -38,24 +39,27 @@ body{font-family:sans-serif;margin:0;padding:8px;background:#f0f2f5}
 <button class="b on" id="t1" onclick="setT(1)">Эконом <span id="p1">150 ₽</span></button>
 <button class="b" id="t2" onclick="setT(2)">Комфорт <span id="p2">225 ₽</span></button>
 </div>
-<button class="go" onclick="st.innerText=tO.innerText">Заказать такси</button>
+<button class="go" onclick="st.textContent=tO.textContent">Заказать такси</button>
 <span id="tA" hidden>Точка А: нажмите на карту</span>
 <span id="tB" hidden>Точка Б: нажмите на карту</span>
 <span id="tO" hidden>Заказ принят!</span>
-<span id="u1" hidden>https://arcgisonline.com</span>
-<span id="u2" hidden>https://openstreetmap.org</span>
+<span id="u1" hidden>https://2gis.com?</span>
+<span id="u2" hidden>https://arcgisonline.com</span>
+<span id="u3" hidden>https://openstreetmap.org</span>
 <span id="s0" hidden>position:absolute;width:256px;height:256px;pointer-events:none;</span>
 <span id="sOk" hidden>Карта OK: </span>
 <span id="sEr" hidden>Ошибка: </span>
 <span id="cls" hidden>on</span>
+<span id="pxU" hidden>px</span><span id="sl" hidden>/</span><span id="png" hidden>.png</span><span id="rub" hidden> ₽</span>
+<span id="qx" hidden>x=</span><span id="qy" hidden>%26y=</span><span id="qz" hidden>%26z=</span>
 </div>
 <script>
 var m=1,pr=1,z=14,cLa=56.4475,cLn=60.1895,laA=56.4426,lnA=60.1819,laB=56.4530,lnB=60.1980;
 function px(la,ln){var n=1<<z,r=la*Math.PI/180;return{x:(ln+180)/360*n*256,y:(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n*256};}
 function ll(x,y){var n=1<<z,a=Math.PI-2*Math.PI*y/(n*256);return{la:180/Math.PI*Math.atan(.5*(Math.exp(a)-Math.exp(-a))),ln:x/(n*256)*360-180};}
-function setP(v){pr=v;var c=cls.innerText;b1.classList.toggle(c,v==1);b2.classList.toggle(c,v==2);draw();}
-function setM(v){m=v;var c=cls.innerText;btA.classList.toggle(c,v==1);btB.classList.toggle(c,v==2);st.innerText=(v==1?tA:tB).innerText;}
-function setT(v){var c=cls.innerText;t1.classList.toggle(c,v==1);t2.classList.toggle(c,v==2);}
+function setP(v){pr=v;var c=cls.textContent;b1.classList.toggle(c,v==1);b2.classList.toggle(c,v==2);b3.classList.toggle(c,v==3);draw();}
+function setM(v){m=v;var c=cls.textContent;btA.classList.toggle(c,v==1);btB.classList.toggle(c,v==2);st.textContent=(v==1?tA:tB).textContent;}
+function setT(v){var c=cls.textContent;t1.classList.toggle(c,v==1);t2.classList.toggle(c,v==2);}
 function draw(){
   var W=w.clientWidth||340,H=w.clientHeight||300,c=px(cLa,cLn),x0=c.x-W/2,y0=c.y-H/2,mx=1<<z,ok=0,er=0;
   ly.innerHTML=ly.title;
@@ -65,28 +69,28 @@ function draw(){
       if(ty>=0){
         if(mx>ty){
           var wx=((tx%mx)+mx)%mx,im=new Image();
-          im.style.cssText=s0.innerText;
-          im.style.left=(tx*256-x0)+pxU.innerText;
-          im.style.top=(ty*256-y0)+pxU.innerText;
-          im.onload=function(){ok++;st2.innerText=sOk.innerText+ok;};
-          im.onerror=function(){er++;st2.innerText=sEr.innerText+er;};
-          if(pr==1)im.src=u1.innerText+z+sl.innerText+ty+sl.innerText+wx;
-          if(pr==2)im.src=u2.innerText+z+sl.innerText+wx+sl.innerText+ty+png.innerText;
+          im.style.cssText=s0.textContent;
+          im.style.left=(tx*256-x0)+pxU.textContent;
+          im.style.top=(ty*256-y0)+pxU.textContent;
+          im.onload=function(){ok++;st2.textContent=sOk.textContent+ok;};
+          im.onerror=function(){er++;st2.textContent=sEr.textContent+er;};
+          if(pr==1)im.src=decodeURIComponent(u1.textContent+qx.textContent+wx+qy.textContent+ty+qz.textContent+z);
+          if(pr==2)im.src=u2.textContent+z+sl.textContent+ty+sl.textContent+wx;
+          if(pr==3)im.src=u3.textContent+z+sl.textContent+wx+sl.textContent+ty+png.textContent;
           ly.appendChild(im);
         }
       }
     }
   }
   var a=px(laA,lnA),b=px(laB,lnB);
-  mA.style.left=(a.x-x0)+pxU.innerText;mA.style.top=(a.y-y0)+pxU.innerText;
-  mB.style.left=(b.x-x0)+pxU.innerText;mB.style.top=(b.y-y0)+pxU.innerText;
+  mA.style.left=(a.x-x0)+pxU.textContent;mA.style.top=(a.y-y0)+pxU.textContent;
+  mB.style.left=(b.x-x0)+pxU.textContent;mB.style.top=(b.y-y0)+pxU.textContent;
 }
 var sx=0,sy=0,mv=0,sla=0,sln=0;
 w.onpointerdown=function(e){sx=e.clientX;sy=e.clientY;mv=0;sla=cLa;sln=cLn;};
 w.onpointermove=function(e){if(sx){var dx=e.clientX-sx,dy=e.clientY-sy;if(Math.abs(dx)>6)mv=1;if(Math.abs(dy)>6)mv=1;if(mv){var c=px(sla,sln),p=ll(c.x-dx,c.y-dy);cLa=p.la;cLn=p.ln;draw();}}};
-w.onpointerup=function(e){if(sx){if(mv==0){var r=w.getBoundingClientRect(),c=px(cLa,cLn),p=ll(c.x-r.width/2+e.clientX-r.left,c.y-r.height/2+e.clientY-r.top);if(m==1){laA=p.la;lnA=p.ln;setM(2);}else{laB=p.la;lnB=p.ln;}draw();var km=Math.hypot((laB-laA)*111,(lnB-lnA)*61)*1.3,v=Math.max(100,Math.round(80+km*28));p1.innerText=v+rub.innerText;p2.innerText=Math.round(v*1.5)+rub.innerText;}sx=0;}};
+w.onpointerup=function(e){if(sx){if(mv==0){var r=w.getBoundingClientRect(),c=px(cLa,cLn),p=ll(c.x-r.width/2+e.clientX-r.left,c.y-r.height/2+e.clientY-r.top);if(m==1){laA=p.la;lnA=p.ln;setM(2);}else{laB=p.la;lnB=p.ln;}draw();var km=Math.hypot((laB-laA)*111,(lnB-lnA)*61)*1.3,v=Math.max(100,Math.round(80+km*28));p1.textContent=v+rub.textContent;p2.textContent=Math.round(v*1.5)+rub.textContent;}sx=0;}};
+draw();
 </script>
-<span id="pxU" hidden>px</span><span id="sl" hidden>/</span><span id="png" hidden>.png</span><span id="rub" hidden> ₽</span>
-<script>draw();</script>
 </body>
 </html>
