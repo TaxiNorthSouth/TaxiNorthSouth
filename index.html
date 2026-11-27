@@ -4,8 +4,8 @@
 <div class=r><button class='b on' id=b1 onclick='setP(1)'>OSM (Дома)</button><button class=b id=b2 onclick='setP(2)'>ArcGIS</button></div>
 <div id=st style=text-align:center;font-weight:700;margin-bottom:6px;font-size:14px>Точка А: нажмите на карту или введите адрес</div>
 <div id=w><div id=ly style=position:absolute;inset:0></div><div id=mA class=p>🟢</div><div id=mB class=p>🔴</div><div style=position:absolute;right:6px;top:6px;z-index:9><button onclick='z++;draw()'>+</button><button onclick='z--;draw()'>-</button></div><div id=st2>Старт</div></div>
-<div class=ir><input id=aA class=inp placeholder='🟢 Откуда (улица, дом)' onfocus='setM(1)' onkeydown='if(event.keyCode==13)findAdr(1)'><button class=sbtn onclick='findAdr(1)'>🔍</button></div>
-<div class=ir><input id=aB class=inp placeholder='🔴 Куда (улица, дом)' onfocus='setM(2)' onkeydown='if(event.keyCode==13)findAdr(2)'><button class=sbtn onclick='findAdr(2)'>🔍</button></div>
+<div class=ir><input id=aA class=inp placeholder='🟢 Откуда (улица, дом)' onkeydown='if(event.keyCode==13)findAdr(1)'><button class=sbtn onclick='findAdr(1)'>🔍</button></div>
+<div class=ir><input id=aB class=inp placeholder='🔴 Куда (улица, дом)' onkeydown='if(event.keyCode==13)findAdr(2)'><button class=sbtn onclick='findAdr(2)'>🔍</button></div>
 <div class=r><button class='b on' id=btA onclick='setM(1)'>🟢 Точка А</button><button class=b id=btB onclick='setM(2)'>🔴 Точка Б</button><button class=b onclick='getGps()'>📍 GPS</button></div>
 <div class=r><button class='b on' id=t1 onclick='setT(1)'>Эконом <span id=p1>150 ₽</span></button><button class=b id=t2 onclick='setT(2)'>Комфорт <span id=p2>225 ₽</span></button></div>
 <button class=go onclick='st.textContent="Заказ принят!"'>Заказать такси</button></div>
@@ -41,7 +41,7 @@ function findAdr(who){
   .then(function(r){return r.json();})
   .then(function(d){
     if(!d.length){st.textContent='Адрес не найден, уточните улицу/дом';return;}
-    var la=parseFloat(d.lat),ln=parseFloat(d.lon);
+    var it=d.shift(),la=parseFloat(it.lat),ln=parseFloat(it.lon);
     cLa=la;cLn=ln;z=16;
     if(who==1){laA=la;lnA=ln;setM(2);}else{laB=la;lnB=ln;}
     draw();calc();
