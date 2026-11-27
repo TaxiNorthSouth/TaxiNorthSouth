@@ -3,25 +3,28 @@
 <body><div class=c>
 <div class=r><button class='b on' id=b1 onclick='setP(1)'>OSM (Дома)</button><button class=b id=b2 onclick='setP(2)'>ArcGIS</button></div>
 <div id=st style=text-align:center;font-weight:700;margin-bottom:6px;font-size:14px>Точка А: нажмите на карту или введите адрес</div>
-<div id=w><div id=ly style=position:absolute;inset:0></div><div id=mA class=p>🟢</div><div id=mB class=p>🔴</div><div style=position:absolute;right:6px;top:6px;z-index:9><button onclick='z++;draw()'>+</button><button onclick='z--;draw()'>-</button></div><div id=st2>Старт</div></div>
+<div id=w><div id=ly style=position:absolute;inset:0></div><div id=mA class=p>🟢</div><div id=mB class=p>🔴</div><div style=position:absolute;right:6px;top:6px;z-index:9><button onclick='zm(1)'>+</button><button onclick='zm(-1)'>-</button></div><div id=st2>Старт</div></div>
 <div class=ir><input id=aA class=inp placeholder='🟢 Откуда (улица, дом)' onkeydown='if(event.keyCode==13)findAdr(1)'><button class=sbtn onclick='findAdr(1)'>🔍</button></div>
 <div class=ir><input id=aB class=inp placeholder='🔴 Куда (улица, дом)' onkeydown='if(event.keyCode==13)findAdr(2)'><button class=sbtn onclick='findAdr(2)'>🔍</button></div>
 <div class=r><button class='b on' id=btA onclick='setM(1)'>🟢 Точка А</button><button class=b id=btB onclick='setM(2)'>🔴 Точка Б</button><button class=b onclick='getGps()'>📍 GPS</button></div>
 <div class=r><button class='b on' id=t1 onclick='setT(1)'>Эконом <span id=p1>150 ₽</span></button><button class=b id=t2 onclick='setT(2)'>Комфорт <span id=p2>225 ₽</span></button></div>
 <button class=go onclick='st.textContent="Заказ принят!"'>Заказать такси</button></div>
 <script>
-var m=1,pr=1,z=15,cLa=56.4475,cLn=60.1895,laA=56.4426,lnA=60.1819,laB=56.4530,lnB=60.1980,H='https:'+String.fromCharCode(47,47),AMP=String.fromCharCode(38);
+var m=1,pr=1,z=15,city='Полевской',cLa=56.4475,cLn=60.1895,laA=56.4426,lnA=60.1819,laB=56.4530,lnB=60.1980,H='https:'+String.fromCharCode(47,47),AMP=String.fromCharCode(38);
 function u(p,x,y,z){
   if(p==1)return H+'tile.openstreetmap'+'.org/'+z+'/'+x+'/'+y+'.png';
   return H+'server.arcgisonline'+'.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/'+z+'/'+y+'/'+x;
 }
 function px(la,ln){var n=1<<z,r=la*Math.PI/180;return{x:(ln+180)/360*n*256,y:(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n*256};}
 function ll(x,y){var n=1<<z,a=Math.PI-2*Math.PI*y/(n*256);return{la:180/Math.PI*Math.atan(.5*(Math.exp(a)-Math.exp(-a))),ln:x/(n*256)*360-180};}
-function setP(v){pr=v;b1.classList.toggle('on',v==1);b2.classList.toggle('on',v==2);draw();}
+function zm(d){var mx=(pr==2?15:18);z=Math.max(11,Math.min(mx,z+d));draw();}
+function setP(v){pr=v;b1.classList.toggle('on',v==1);b2.classList.toggle('on',v==2);if(v==2){if(z>15)z=15;}draw();}
 function setM(v){m=v;btA.classList.toggle('on',v==1);btB.classList.toggle('on',v==2);st.textContent=v==1?'Укажите Точку А (на карте или текстом)':'Укажите Точку Б (на карте или текстом)';}
 function setT(v){t1.classList.toggle('on',v==1);t2.classList.toggle('on',v==2);}
 function calc(){
-  var km=Math.hypot((laB-laA)*111,(lnB-lnA)*61)*1.3,v=Math.max(100,Math.round(80+km*28));
+  var km=Math.hypot((laB-laA)*111,(lnB-lnA)*61)*1.3;
+  if(!isFinite(km))return;
+  var v=Math.max(100,Math.round(80+km*28));
   p1.textContent=v+' ₽';p2.textContent=Math.round(v*1.5)+' ₽';
 }
 function geo(la,ln,who){
@@ -30,19 +33,27 @@ function geo(la,ln,who){
   .then(function(r){return r.json();})
   .then(function(d){
     var a=d.address||{};
+    if(a.city||a.town)city=a.city||a.town;
     el.value=(a.road||'Точка')+(a.house_number?', '+a.house_number:'');
   }).catch(function(){el.value=la.toFixed(5)+', '+ln.toFixed(5);});
 }
 function findAdr(who){
   var el=(who==1?aA:aB),q=el.value.trim();
   if(!q)return;
-  st.textContent='Ищем адрес на карте...';
-  fetch(H+'nominatim.openstreetmap'+'.org/search?format=json'+AMP+'limit=1'+AMP+'q='+encodeURIComponent('Полевской, '+q))
+  st.textContent='Ищем: '+q+'...';
+  var vb=(lnA-0.25)+','+(laA+0.25)+','+(lnA+0.25)+','+(laA-0.25);
+  fetch(H+'nominatim.openstreetmap'+'.org/search?format=json'+AMP+'limit=1'+AMP+'viewbox='+vb+AMP+'q='+encodeURIComponent(city+', '+q))
   .then(function(r){return r.json();})
   .then(function(d){
-    if(!d.length){st.textContent='Адрес не найден, уточните улицу/дом';return;}
-    var it=d.shift(),la=parseFloat(it.lat),ln=parseFloat(it.lon);
-    cLa=la;cLn=ln;z=16;
+    if(!d.length)return fetch(H+'nominatim.openstreetmap'+'.org/search?format=json'+AMP+'limit=1'+AMP+'q='+encodeURIComponent('Свердловская область, '+q)).then(function(r){return r.json();});
+    return d;
+  })
+  .then(function(d){
+    var it=d.shift();
+    if(!it){st.textContent='Адрес не найден, уточните улицу';return;}
+    var la=parseFloat(it.lat),ln=parseFloat(it.lon);
+    if(!isFinite(la)||!isFinite(ln))return;
+    cLa=la;cLn=ln;z=(pr==2?15:16);
     if(who==1){laA=la;lnA=ln;setM(2);}else{laB=la;lnB=ln;}
     draw();calc();
     st.textContent='Адрес найден!';
