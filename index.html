@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><title>Такси Север-Юг</title><meta charset=UTF-8><meta name=viewport content=width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no><meta name=referrer content=no-referrer>
+<!DOCTYPE html><html><head><script src="https://telegram.org/js/telegram-web-app.js"></script><title>Такси Север-Юг</title><meta charset=UTF-8><meta name=viewport content=width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no><meta name=referrer content=no-referrer>
 <style>body{font-family:sans-serif;margin:0;padding:8px;background:#f0f2f5}.c{background:#fff;padding:10px;border-radius:14px;max-width:460px;margin:0 auto}.r{display:flex;gap:6px;margin-bottom:8px}.b{flex:1;padding:9px 4px;border:2px solid #ddd;border-radius:9px;background:#fff;font-weight:700;font-size:13px}.on{border-color:#fc0;background:#fff9db}#w{height:260px;background:#e5e9ec;border-radius:10px;margin-bottom:8px;border:2px solid #b0c4de;position:relative;overflow:hidden;touch-action:none}.p{position:absolute;font-size:26px;transform:translate(-50%,-85%);pointer-events:none;z-index:5}#st2{position:absolute;left:6px;bottom:6px;z-index:9;background:#fff;padding:2px 6px;border-radius:5px;font-size:11px}.ir{display:flex;gap:4px;margin-bottom:6px}.inp{flex:1;padding:9px 10px;border:2px solid #ddd;border-radius:9px;font-size:13px;outline:none}.inp:focus{border-color:#fc0}.sbtn{padding:0 12px;border:2px solid #ddd;border-radius:9px;background:#f8f9fa;font-size:15px}.go{width:100%;background:#fc0;border:none;padding:14px;font-size:16px;font-weight:700;border-radius:10px}</style></head>
 <body><div class=c><div style="text-align:center;font-weight:800;font-size:16px;margin-bottom:6px">🚕 Такси «Север-Юг»</div>
 <div class=r><button class='b on' id=b1 onclick='setP(1)'>OSM (Дома)</button><button class=b id=b2 onclick='setP(2)'>ArcGIS</button></div>
@@ -17,8 +17,20 @@ function u(p,x,y,z){
 }
 function px(la,ln){var n=1<<z,r=la*Math.PI/180;return{x:(ln+180)/360*n*256,y:(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n*256};}
 function ll(x,y){var n=1<<z,a=Math.PI-2*Math.PI*y/(n*256);return{la:180/Math.PI*Math.atan(.5*(Math.exp(a)-Math.exp(-a))),ln:x/(n*256)*360-180};}
-function zm(d){var mx=(pr==2?15:18);z=Math.max(11,Math.min(mx,z+d));draw();}
-function setP(v){pr=v;b1.classList.toggle('on',v==1);b2.classList.toggle('on',v==2);if(v==2){if(z>15)z=15;}draw();}
+function zm(d){var mx=(pr==2?15:18);z=Math.max(11,Math.min(mx,z+d));function sendOrd(){
+  var fr=aA.value.trim(),to=aB.value.trim();
+  var data=JSON.stringify({fr:fr,to:to,tar:t1.classList.contains('on')?'econom':'comfort',pr:t1.classList.contains('on')?p1.textContent:p2.textContent,laA:laA,lnA:lnA,laB:laB,lnB:lnB});
+  if(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData){Telegram.WebApp.sendData(data);}
+  else{st.textContent='Откройте карту через кнопку в Telegram-боте!';}
+}
+draw();}
+function setP(v){pr=v;b1.classList.toggle('on',v==1);b2.classList.toggle('on',v==2);if(v==2){if(z>15)z=15;}function sendOrd(){
+  var fr=aA.value.trim(),to=aB.value.trim();
+  var data=JSON.stringify({fr:fr,to:to,tar:t1.classList.contains('on')?'econom':'comfort',pr:t1.classList.contains('on')?p1.textContent:p2.textContent,laA:laA,lnA:lnA,laB:laB,lnB:lnB});
+  if(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData){Telegram.WebApp.sendData(data);}
+  else{st.textContent='Откройте карту через кнопку в Telegram-боте!';}
+}
+draw();}
 function setM(v){m=v;btA.classList.toggle('on',v==1);btB.classList.toggle('on',v==2);st.textContent=v==1?'Укажите Точку А (на карте или текстом)':'Укажите Точку Б (на карте или текстом)';}
 function setT(v){t1.classList.toggle('on',v==1);t2.classList.toggle('on',v==2);}
 function calc(){
@@ -55,14 +67,26 @@ function findAdr(who){
     if(!isFinite(la)||!isFinite(ln))return;
     cLa=la;cLn=ln;z=(pr==2?15:16);
     if(who==1){laA=la;lnA=ln;setM(2);}else{laB=la;lnB=ln;}
-    draw();calc();
+    function sendOrd(){
+  var fr=aA.value.trim(),to=aB.value.trim();
+  var data=JSON.stringify({fr:fr,to:to,tar:t1.classList.contains('on')?'econom':'comfort',pr:t1.classList.contains('on')?p1.textContent:p2.textContent,laA:laA,lnA:lnA,laB:laB,lnB:lnB});
+  if(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData){Telegram.WebApp.sendData(data);}
+  else{st.textContent='Откройте карту через кнопку в Telegram-боте!';}
+}
+draw();calc();
     st.textContent='Адрес найден!';
   }).catch(function(){st.textContent='Ошибка поиска адреса';});
 }
 function upd(la,ln){
   if(m==1){laA=la;lnA=ln;geo(la,ln,1);setM(2);}
   else{laB=la;lnB=ln;geo(la,ln,2);}
-  draw();calc();
+  function sendOrd(){
+  var fr=aA.value.trim(),to=aB.value.trim();
+  var data=JSON.stringify({fr:fr,to:to,tar:t1.classList.contains('on')?'econom':'comfort',pr:t1.classList.contains('on')?p1.textContent:p2.textContent,laA:laA,lnA:lnA,laB:laB,lnB:lnB});
+  if(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData){Telegram.WebApp.sendData(data);}
+  else{st.textContent='Откройте карту через кнопку в Telegram-боте!';}
+}
+draw();calc();
 }
 function getGps(){
   if(!navigator.geolocation){st.textContent='GPS недоступен';return;}
@@ -92,7 +116,19 @@ function draw(){
 }
 var sx=0,sy=0,mv=0,sla=0,sln=0;
 w.onpointerdown=function(e){sx=e.clientX;sy=e.clientY;mv=0;sla=cLa;sln=cLn;};
-w.onpointermove=function(e){if(sx){var dx=e.clientX-sx,dy=e.clientY-sy;if(Math.abs(dx)>6)mv=1;if(Math.abs(dy)>6)mv=1;if(mv){var c=px(sla,sln),p=ll(c.x-dx,c.y-dy);cLa=p.la;cLn=p.ln;draw();}}};
+w.onpointermove=function(e){if(sx){var dx=e.clientX-sx,dy=e.clientY-sy;if(Math.abs(dx)>6)mv=1;if(Math.abs(dy)>6)mv=1;if(mv){var c=px(sla,sln),p=ll(c.x-dx,c.y-dy);cLa=p.la;cLn=p.ln;function sendOrd(){
+  var fr=aA.value.trim(),to=aB.value.trim();
+  var data=JSON.stringify({fr:fr,to:to,tar:t1.classList.contains('on')?'econom':'comfort',pr:t1.classList.contains('on')?p1.textContent:p2.textContent,laA:laA,lnA:lnA,laB:laB,lnB:lnB});
+  if(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData){Telegram.WebApp.sendData(data);}
+  else{st.textContent='Откройте карту через кнопку в Telegram-боте!';}
+}
+draw();}}};
 w.onpointerup=function(e){if(sx){if(mv==0){var r=w.getBoundingClientRect(),c=px(cLa,cLn),p=ll(c.x-r.width/2+e.clientX-r.left,c.y-r.height/2+e.clientY-r.top);upd(p.la,p.ln);}sx=0;}};
+function sendOrd(){
+  var fr=aA.value.trim(),to=aB.value.trim();
+  var data=JSON.stringify({fr:fr,to:to,tar:t1.classList.contains('on')?'econom':'comfort',pr:t1.classList.contains('on')?p1.textContent:p2.textContent,laA:laA,lnA:lnA,laB:laB,lnB:lnB});
+  if(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData){Telegram.WebApp.sendData(data);}
+  else{st.textContent='Откройте карту через кнопку в Telegram-боте!';}
+}
 draw();getGps();
 </script></body></html>
