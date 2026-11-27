@@ -1,11 +1,260 @@
-<!DOCTYPE html><html><head><meta charset=UTF-8><meta name=viewport content=width=device-width,initial-scale=1><meta name=referrer content=no-referrer><title>Такси Север-Юг</title>
-<style>body{font-family:sans-serif;margin:0;padding:8px;background:#f0f2f5}.c{background:#fff;padding:10px;border-radius:14px;max-width:460px;margin:0 auto}.r{display:flex;gap:6px;margin-bottom:8px}.b{flex:1;padding:9px 4px;border:2px solid #ddd;border-radius:9px;background:#fff;font-weight:700;font-size:13px}.on{border-color:#fc0;background:#fff9db}#w{height:240px;background:#e5e9ec;border-radius:10px;margin-bottom:8px;border:2px solid #b0c4de;position:relative;overflow:hidden;touch-action:none}.p{position:absolute;font-size:24px;transform:translate(-50%,-85%);pointer-events:none;z-index:5}#st2{position:absolute;left:6px;bottom:6px;z-index:9;background:#fff;padding:2px 6px;border-radius:5px;font-size:11px}.ir{display:flex;gap:4px;margin-bottom:6px}.inp{flex:1;padding:10px;border:2px solid #ddd;border-radius:9px;font-size:14px}.sbtn{padding:0 12px;border:2px solid #ddd;border-radius:9px;background:#f8f9fa}.go{width:100%;background:#fc0;border:none;padding:14px;font-size:16px;font-weight:700;border-radius:10px}.canc{width:100%;background:#ff4d4f;color:#fff;border:none;padding:14px;font-size:16px;font-weight:700;border-radius:10px}</style></head>
-<body><div class=c><div style="text-align:center;font-weight:800;font-size:16px;margin-bottom:6px">🚕 Такси «Север-Юг»</div>
-<div class=r><button class="b on" id=b1 onclick="setP(1)">OSM (Дома)</button><button class=b id=b2 onclick="setP(2)">ArcGIS</button></div>
-<div id=st style="text-align:center;font-weight:700;margin-bottom:6px;font-size:13px">Укажите адреса маршрута</div>
-<div id=w><div id=ly style="position:absolute;inset:0"></div><div id=pins></div><div style="position:absolute;right:6px;top:6px;z-index:9"><button onclick="zm(1)">+</button><button onclick="zm(-1)">-</button></div><div id=st2>v4</div></div>
-<div id=ptsBox><div class=ir><input id=in0 class=inp placeholder="🟢 Откуда (улица, дом)"><button class=sbtn onclick="findAdr(0)">🔍</button></div><div class=ir><input id=in1 class=inp placeholder="🔴 Куда (улица, дом)"><button class=sbtn onclick="findAdr(1)">🔍</button></div></div>
-<div class=r><button class=b onclick="addPt()">➕ Добавить точку</button><button class=b onclick="getGps()">📍 Мой GPS</button></div>
-<div class=ir><input id=phInp class=inp type=tel placeholder="📱 Ваш телефон"></div>
-<div class=r><button class="b on" id=t1 onclick="setT(1)">Эконом <span id=p1>150 ₽</span></button><button class=b id=t2 onclick="setT(2)">Комфорт <span id=p2>225 ₽</span></button></div>
-<button class=go id=obtn onclick="sendOrd()">Заказать такси</button></div>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="referrer" content="no-referrer">
+<title>Такси Север-Юг</title>
+<script src="https://telegram.org"></script>
+<style>
+  body{font-family:sans-serif;margin:0;padding:8px;background:#f0f2f5}
+  .c{background:#fff;padding:10px;border-radius:14px;max-width:460px;margin:0 auto;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .r{display:flex;gap:6px;margin-bottom:8px}
+  .b{flex:1;padding:9px 4px;border:2px solid #ddd;border-radius:9px;background:#fff;font-weight:700;font-size:13px;cursor:pointer}
+  .on{border-color:#fc0;background:#fff9db}
+  #w{height:240px;background:#e5e9ec;border-radius:10px;margin-bottom:8px;border:2px solid #b0c4de;position:relative;overflow:hidden;touch-action:none;cursor:grab}
+  .p{position:absolute;font-size:24px;transform:translate(-50%,-85%);pointer-events:none;z-index:5}
+  #st2{position:absolute;left:6px;bottom:6px;z-index:9;background:rgba(255,255,255,.9);padding:2px 6px;border-radius:5px;font-size:11px}
+  .zbtn{width:30px;height:30px;border:1px solid #bbb;background:#fff;border-radius:6px;font-weight:700;font-size:16px;margin-left:4px;cursor:pointer}
+  .ir{display:flex;gap:4px;margin-bottom:6px}
+  .inp{flex:1;padding:10px;border:2px solid #ddd;border-radius:9px;font-size:14px;min-width:0}
+  .sbtn{padding:0 12px;border:2px solid #ddd;border-radius:9px;background:#f8f9fa;cursor:pointer}
+  .go{width:100%;background:#fc0;border:none;padding:14px;font-size:16px;font-weight:700;border-radius:10px;cursor:pointer}
+  .go:active{background:#f5c000}
+</style>
+</head>
+<body>
+<div class="c">
+  <div style="text-align:center;font-weight:800;font-size:16px;margin-bottom:6px">🚕 Такси «Север-Юг»</div>
+  <div class="r">
+    <button class="b on" id="b1" onclick="setP(1)">OSM (Дома)</button>
+    <button class="b" id="b2" onclick="setP(2)">ArcGIS</button>
+  </div>
+  <div id="st" style="text-align:center;font-weight:700;margin-bottom:6px;font-size:13px;color:#444">Нажмите на карту или введите адрес</div>
+  <div id="w">
+    <div id="ly" style="position:absolute;inset:0"></div>
+    <div id="pins"></div>
+    <div style="position:absolute;right:6px;top:6px;z-index:9">
+      <button class="zbtn" onclick="zm(1)">+</button>
+      <button class="zbtn" onclick="zm(-1)">-</button>
+    </div>
+    <div id="st2">z15</div>
+  </div>
+  <div id="ptsBox">
+    <div class="ir">
+      <input id="in0" class="inp" placeholder="🟢 Откуда (улица, дом)" onfocus="activeIdx=0">
+      <button class="sbtn" onclick="findAdr(0)">🔍</button>
+    </div>
+    <div class="ir">
+      <input id="in1" class="inp" placeholder="🔴 Куда (улица, дом)" onfocus="activeIdx=1">
+      <button class="sbtn" onclick="findAdr(1)">🔍</button>
+    </div>
+  </div>
+  <div class="r">
+    <button class="b" onclick="addPt()">➕ Добавить точку</button>
+    <button class="b" onclick="getGps()">📍 Мой GPS</button>
+  </div>
+  <div class="ir">
+    <input id="phInp" class="inp" type="tel" placeholder="📱 Ваш телефон">
+  </div>
+  <div class="r">
+    <button class="b on" id="t1" onclick="setT(1)">Эконом <span id="p1">150 ₽</span></button>
+    <button class="b" id="t2" onclick="setT(2)">Комфорт <span id="p2">225 ₽</span></button>
+  </div>
+  <button class="go" id="obtn" onclick="sendOrd()">Заказать такси</button>
+</div>
+
+<script>
+  const tg = window.Telegram ? window.Telegram.WebApp : null;
+  if (tg) { tg.ready(); tg.expand(); }
+
+  let cLat = 56.4455, cLon = 60.1872, zoom = 15, prov = 1, tar = 1;
+  let pts = [null, null], activeIdx = 0;
+  const wEl = document.getElementById('w'), lyEl = document.getElementById('ly'), pinsEl = document.getElementById('pins'), stEl = document.getElementById('st');
+
+  function latLonToTile(lat, lon, z) {
+    const n = Math.pow(2, z), rad = lat * Math.PI / 180;
+    return { x: (lon + 180) / 360 * n, y: (1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2 * n };
+  }
+  function tileToLatLon(x, y, z) {
+    const n = Math.pow(2, z), rad = Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n)));
+    return { lat: rad * 180 / Math.PI, lon: x / n * 360 - 180 };
+  }
+  function render() {
+    const W = wEl.clientWidth, H = wEl.clientHeight, center = latLonToTile(cLat, cLon, zoom), ts = 256, maxT = Math.pow(2, zoom);
+    let html = '';
+    for (let x = Math.floor(center.x - W / (2 * ts)); x <= Math.floor(center.x + W / (2 * ts)); x++) {
+      for (let y = Math.floor(center.y - H / (2 * ts)); y <= Math.floor(center.y + H / (2 * ts)); y++) {
+        if (y < 0 || y >= maxT) continue;
+        const wx = ((x % maxT) + maxT) % maxT;
+        const url = prov === 1 ? `https://openstreetmap.org{zoom}/${wx}/${y}.png` : `https://arcgisonline.com{zoom}/${y}/${wx}`;
+        html += `<img src="${url}" style="position:absolute;left:${Math.round(W/2+(x-center.x)*ts)}px;top:${Math.round(H/2+(y-center.y)*ts)}px;width:${ts}px;height:${ts}px;pointer-events:none">`;
+      }
+    }
+    lyEl.innerHTML = html;
+    let pHtml = '';
+    pts.forEach((p, idx) => {
+      if (!p) return;
+      const tp = latLonToTile(p.lat, p.lon, zoom);
+      const icon = idx === 0 ? '🟢' : (idx === pts.length - 1 ? '🔴' : '🟡');
+      pHtml += `<div class="p" style="left:${W/2+(tp.x-center.x)*ts}px;top:${H/2+(tp.y-center.y)*ts}px">${icon}</div>`;
+    });
+    pinsEl.innerHTML = pHtml;
+    document.getElementById('st2').textContent = `z${zoom}`;
+    calcPrice();
+  }
+  function setP(p) {
+    prov = p;
+    document.getElementById('b1').classList.toggle('on', p === 1);
+    document.getElementById('b2').classList.toggle('on', p === 2);
+    render();
+  }
+  function setT(t) {
+    tar = t;
+    document.getElementById('t1').classList.toggle('on', t === 1);
+    document.getElementById('t2').classList.toggle('on', t === 2);
+  }
+  function zm(d) {
+    zoom = Math.max(10, Math.min(18, zoom + d));
+    render();
+  }
+
+  let drag = false, moved = false, sx = 0, sy = 0;
+  wEl.addEventListener('pointerdown', e => {
+    if (e.target.tagName === 'BUTTON') return;
+    drag = true; moved = false; sx = e.clientX; sy = e.clientY;
+  });
+  window.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
+    if (!moved) return;
+    sx = e.clientX; sy = e.clientY;
+    const center = latLonToTile(cLat, cLon, zoom);
+    const next = tileToLatLon(center.x - dx / 256, center.y - dy / 256, zoom);
+    cLat = next.lat; cLon = next.lon;
+    render();
+  });
+  window.addEventListener('pointerup', e => {
+    if (!drag) return;
+    drag = false;
+    if (!moved && e.target.tagName !== 'BUTTON') {
+      const rect = wEl.getBoundingClientRect();
+      const px = e.clientX - rect.left, py = e.clientY - rect.top;
+      const center = latLonToTile(cLat, cLon, zoom);
+      const pos = tileToLatLon(center.x + (px - wEl.clientWidth / 2) / 256, center.y + (py - wEl.clientHeight / 2) / 256, zoom);
+      setPoint(activeIdx, pos.lat, pos.lon, true);
+      if (activeIdx < pts.length - 1) activeIdx++;
+    }
+  });
+
+  async function setPoint(idx, lat, lon, revGeo) {
+    pts[idx] = { lat, lon };
+    render();
+    if (revGeo) {
+      stEl.textContent = 'Определяем адрес...';
+      try {
+        const r = await fetch(`https://openstreetmap.org{lat}&lon=${lon}&accept-language=ru`);
+        const data = await r.json();
+        const a = data.address || {};
+        const road = a.road || a.pedestrian || a.suburb || '';
+        const house = a.house_number ? `, ${a.house_number}` : '';
+        document.getElementById(`in${idx}`).value = road ? `${road}${house}` : `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+        stEl.textContent = 'Точка установлена';
+      } catch {
+        document.getElementById(`in${idx}`).value = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+        stEl.textContent = 'Координаты выбраны';
+      }
+    }
+  }
+
+  async function findAdr(idx) {
+    const q = document.getElementById(`in${idx}`).value.trim();
+    if (!q) return;
+    stEl.textContent = 'Поиск адреса...';
+    try {
+      const r = await fetch(`https://openstreetmap.org{encodeURIComponent('Полевской, ' + q)}&accept-language=ru`);
+      const arr = await r.json();
+      if (arr && arr.length) {
+        const lat = parseFloat(arr.lat), lon = parseFloat(arr.lon);
+        cLat = lat; cLon = lon;
+        pts[idx] = { lat, lon };
+        render();
+        stEl.textContent = 'Адрес найден';
+      } else {
+        stEl.textContent = 'Адрес не найден — уточните улицу';
+      }
+    } catch {
+      stEl.textContent = 'Ошибка поиска адреса';
+    }
+  }
+
+  function addPt() {
+    if (pts.length >= 5) return alert('Максимум 5 точек маршрута');
+    const idx = pts.length;
+    pts.push(null);
+    const box = document.getElementById('ptsBox');
+    const div = document.createElement('div');
+    div.className = 'ir';
+    div.innerHTML = `<input id="in${idx}" class="inp" placeholder="🟡 Промежуточная точка ${idx}" onfocus="activeIdx=${idx}"><button class="sbtn" onclick="findAdr(${idx})">🔍</button>`;
+    box.appendChild(div);
+    activeIdx = idx;
+  }
+
+  function getGps() {
+    if (!navigator.geolocation) return alert('Геолокация не поддерживается');
+    stEl.textContent = 'Определяем GPS...';
+    navigator.geolocation.getCurrentPosition(pos => {
+      cLat = pos.coords.latitude;
+      cLon = pos.coords.longitude;
+      setPoint(0, cLat, cLon, true);
+    }, () => {
+      stEl.textContent = 'Не удалось получить GPS';
+    }, { enableHighAccuracy: true, timeout: 8000 });
+  }
+
+  function distKm(a, b) {
+    const R = 6371, dLat = (b.lat - a.lat) * Math.PI / 180, dLon = (b.lon - a.lon) * Math.PI / 180;
+    const s = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s)) * 1.25;
+  }
+
+  function calcPrice() {
+    let km = 0;
+    for (let i = 0; i < pts.length - 1; i++) {
+      if (pts[i] && pts[i + 1]) km += distKm(pts[i], pts[i + 1]);
+    }
+    const pEco = Math.max(150, Math.round((150 + Math.max(0, km - 2) * 25) / 5) * 5);
+    const pCom = Math.max(225, Math.round((225 + Math.max(0, km - 2) * 35) / 5) * 5);
+    document.getElementById('p1').textContent = `${pEco} ₽`;
+    document.getElementById('p2').textContent = `${pCom} ₽`;
+  }
+
+  function sendOrd() {
+    const addrs = [];
+    for (let i = 0; i < pts.length; i++) {
+      const val = document.getElementById(`in${i}`).value.trim();
+      if (val) addrs.push(val);
+    }
+    if (addrs.length < 2) return alert('Укажите как минимум адрес подачи и конечный адрес!');
+    const ph = document.getElementById('phInp').value.trim();
+    const pr = document.getElementById(tar === 1 ? 'p1' : 'p2').textContent;
+    const payload = {
+      fr: addrs,
+      to: addrs.slice(1).join(' -> '),
+      tar: tar === 1 ? 'econom' : 'comfort',
+      pr: pr,
+      ph: ph
+    };
+    if (tg && tg.initData) {
+      tg.sendData(JSON.stringify(payload));
+    } else {
+      alert('Заказ сформирован (тест вне Telegram):\n' + JSON.stringify(payload, null, 2));
+    }
+  }
+
+  window.addEventListener('resize', render);
+  render();
+</script>
+</body>
+</html>
