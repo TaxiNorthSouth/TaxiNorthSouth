@@ -41,8 +41,8 @@ function findAdr(who){
   var el=(who==1?aA:aB),q=el.value.trim();
   if(!q)return;
   st.textContent='Ищем: '+q+'...';
-  var vb=(lnA-0.25)+','+(laA+0.25)+','+(lnA+0.25)+','+(laA-0.25);
-  fetch(H+'nominatim.openstreetmap'+'.org/search?format=json'+AMP+'limit=1'+AMP+'viewbox='+vb+AMP+'q='+encodeURIComponent(city+', '+q))
+  var vb=(lnA-0.15)+','+(laA+0.15)+','+(lnA+0.15)+','+(laA-0.15);
+  fetch(H+'nominatim.openstreetmap'+'.org/search?format=json'+AMP+'limit=1'+AMP+'bounded=1'+AMP+'viewbox='+vb+AMP+'q='+encodeURIComponent(city+', '+q))
   .then(function(r){return r.json();})
   .then(function(d){
     if(!d.length)return fetch(H+'nominatim.openstreetmap'+'.org/search?format=json'+AMP+'limit=1'+AMP+'q='+encodeURIComponent('Свердловская область, '+q)).then(function(r){return r.json();});
