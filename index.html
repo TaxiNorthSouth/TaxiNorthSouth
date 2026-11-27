@@ -4,22 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Такси Полевской</title>
-<link rel="stylesheet" href="https://cloudflare.com"/>
-<script src="https://cloudflare.com"></script>
+<link rel="stylesheet" href="https://unpkg.com"/>
+<script src="https://unpkg.com"></script>
 <style>
 body{font-family:sans-serif;margin:0;padding:10px;background:#f0f2f5}
 .card{background:#fff;padding:12px;border-radius:16px;box-shadow:0 2px 10px rgba(0,0,0,.1);max-width:460px;margin:0 auto}
 .tabs{display:flex;gap:4px;margin-bottom:10px;background:#eee;padding:4px;border-radius:10px}
-.tab{flex:1;padding:8px 4px;border:none;border-radius:8px;background:0 0;font-size:12px;font-weight:700;color:#555}
+.tab{flex:1;padding:8px 4px;border:none;border-radius:8px;background:0 0;font-size:12px;font-weight:700;color:#555;cursor:pointer}
 .tab.active{background:#fff;color:#000;box-shadow:0 1px 4px rgba(0,0,0,.15)}
 #wrap{height:300px;background:#e5e9ec;border-radius:12px;margin-bottom:10px;border:2px solid #b0c4de;position:relative;overflow:hidden}
 .box{width:100%;height:100%;position:absolute;top:0;left:0;display:none}
 .box.show{display:block}
 #ymap-msg{padding:16px;text-align:center;font-size:13px;color:#444;margin-top:85px}
 .row{display:flex;gap:8px;margin-bottom:8px}
-.btn{flex:1;padding:11px 6px;border:2px solid #ddd;border-radius:10px;background:#fff;font-size:13px;font-weight:700}
+.btn{flex:1;padding:11px 6px;border:2px solid #ddd;border-radius:10px;background:#fff;font-size:13px;font-weight:700;cursor:pointer}
 .btn.active{border-color:#fc0;background:#fff9db}
-.go{width:100%;background:#fc0;border:none;padding:14px;font-size:16px;font-weight:700;border-radius:12px}
+.go{width:100%;background:#fc0;border:none;padding:14px;font-size:16px;font-weight:700;border-radius:12px;cursor:pointer}
 .pin{position:absolute;font-size:28px;transform:translate(-50%,-50%);pointer-events:none;z-index:5}
 #scar{transition:left .15s linear,top .15s linear;display:none;z-index:6;font-size:30px}
 </style>
@@ -67,66 +67,105 @@ var KEY='2738e3ad-b2a6-4dec-b0c6-0bcf3323d2ad',m='A',tmr=null,latA=56.4426,lngA=
 var yMap=null,yMkA,yMkB,yLn,yCar,yLoad=false,lMap=null,lLay=null,lMkA,lMkB,lLn,lCar;
 
 function sw(e){
-var ids=new Array('yandex','2gis','arcgis','svg');
-for(var i=0;i<4;i++){var id=String(ids.slice(i,i+1));document.getElementById('t-'+id).className=id===e?'tab active':'tab';}
-document.getElementById('b-yandex').className=e==='yandex'?'box show':'box';
+var ids=['yandex','2gis','arcgis','svg'];
+for(var i=0;i<4;i++){
+  var id=ids[i];
+  document.getElementById('t-'+id).className=(id===e)?'tab active':'tab';
+}
+document.getElementById('b-yandex').className=(e==='yandex')?'box show':'box';
 document.getElementById('b-leaflet').className=(e==='2gis'||e==='arcgis')?'box show':'box';
-document.getElementById('b-svg').className=e==='svg'?'box show':'box';
+document.getElementById('b-svg').className=(e==='svg')?'box show':'box';
 if(e==='yandex')initY();
 if(e==='2gis'||e==='arcgis')initL(e);
 }
 
 function initY(){
 if(yMap){yMap.container.fitToViewport();return;}
-if(yLoad)return;yLoad=true;
+if(yLoad)return;
+yLoad=true;
 var s=document.createElement('script');
 s.src='https://yandex.ru';
-s.onerror=function(){document.getElementById('ymap-msg').innerHTML='Яндекс заблокирован.<br>Жми вкладку <b>2ГИС</b> или <b>ArcGIS</b>';};
+s.onerror=function(){
+  document.getElementById('ymap-msg').innerHTML='Яндекс заблокирован.<br>Жми вкладку <b>2ГИС</b> или <b>ArcGIS</b>';
+};
 s.onload=function(){
-ymaps.ready(function(){
-document.getElementById('b-yandex').innerHTML='';
-yMap=new ymaps.Map('b-yandex',{center:new Array(latA,lngA),zoom:14,controls:new Array('zoomControl')});
-yMkA=new ymaps.Placemark(new Array(latA,lngA),{},{preset:'islands#greenDotIcon'});
-yMkB=new ymaps.Placemark(new Array(latB,lngB),{},{preset:'islands#redDotIcon'});
-yLn=new ymaps.Polyline(new Array(new Array(latA,lngA),new Array(latB,lngB)),{},{strokeColor:'#222',strokeWidth:4});
-yMap.geoObjects.add(yMkA);yMap.geoObjects.add(yMkB);yMap.geoObjects.add(yLn);
-yMap.events.add('click',function(e){var c=e.get('coords');upd(Number(c.slice(0,1)),Number(c.slice(1,2)));});
-},function(){document.getElementById('ymap-msg').innerHTML='Ключ Яндекса отклонен.<br>Жми <b>2ГИС</b> или <b>ArcGIS</b>';});
+  ymaps.ready(function(){
+    document.getElementById('b-yandex').innerHTML='';
+    yMap=new ymaps.Map('b-yandex',{center:[latA,lngA],zoom:14,controls:['zoomControl']});
+    yMkA=new ymaps.Placemark([latA,lngA],{},{preset:'islands#greenDotIcon'});
+    yMkB=new ymaps.Placemark([latB,lngB],{},{preset:'islands#redDotIcon'});
+    yLn=new ymaps.Polyline([[latA,lngA],[latB,lngB]],{},{strokeColor:'#222',strokeWidth:4});
+    yMap.geoObjects.add(yMkA);
+    yMap.geoObjects.add(yMkB);
+    yMap.geoObjects.add(yLn);
+    yMap.events.add('click',function(e){
+      var c=e.get('coords');
+      upd(c[0],c[1]);
+    });
+  },function(){
+    document.getElementById('ymap-msg').innerHTML='Ключ Яндекса отклонен.<br>Жми <b>2ГИС</b> или <b>ArcGIS</b>';
+  });
 };
 document.head.appendChild(s);
 }
 
 function initL(type){
-if(typeof L==='undefined'){alert('Откройте вкладку Схема');return;}
+if(typeof L==='undefined'){
+  alert('Библиотека карт не загрузилась. Откройте вкладку Схема');
+  return;
+}
 if(!lMap){
-lMap=L.map('b-leaflet').setView(new Array(latA,lngA),14);
-lMkA=L.circleMarker(new Array(latA,lngA),{radius:10,color:'#1e8449',fillColor:'#2ecc71',fillOpacity:1}).addTo(lMap);
-lMkB=L.circleMarker(new Array(latB,lngB),{radius:10,color:'#922b21',fillColor:'#e74c3c',fillOpacity:1}).addTo(lMap);
-lLn=L.polyline(new Array(new Array(latA,lngA),new Array(latB,lngB)),{color:'#222',weight:4}).addTo(lMap);
-lMap.on('click',function(e){upd(e.latlng.lat,e.latlng.lng);});
+  lMap=L.map('b-leaflet').setView([latA,lngA],14);
+  lMkA=L.circleMarker([latA,lngA],{radius:10,color:'#1e8449',fillColor:'#2ecc71',fillOpacity:1}).addTo(lMap);
+  lMkB=L.circleMarker([latB,lngB],{radius:10,color:'#922b21',fillColor:'#e74c3c',fillOpacity:1}).addTo(lMap);
+  lLn=L.polyline([[latA,lngA],[latB,lngB]],{color:'#222',weight:4}).addTo(lMap);
+  lMap.on('click',function(e){upd(e.latlng.lat,e.latlng.lng);});
 }
 if(lLay)lMap.removeLayer(lLay);
-var NoRef=L.TileLayer.extend({createTile:function(c,d){var t=document.createElement('img');t.referrerPolicy='no-referrer';t.onload=function(){d(null,t)};t.onerror=function(e){d(e,t)};t.src=this.getTileUrl(c);return t;}});
-var u=type==='2gis'?'https://tile{s}://{x}&y={y}&z={z}&v=1':'https://arcgisonline.com{z}/{y}/{x}';
+var NoRef=L.TileLayer.extend({
+  createTile:function(c,d){
+    var t=document.createElement('img');
+    t.referrerPolicy='no-referrer';
+    t.onload=function(){d(null,t)};
+    t.onerror=function(e){d(e,t)};
+    t.src=this.getTileUrl(c);
+    return t;
+  }
+});
+var u=(type==='2gis')
+  ?'https://tile{s}://{x}&y={y}&z={z}&v=1'
+  :'https://arcgisonline.com{z}/{y}/{x}';
 lLay=new NoRef(u,{subdomains:'0123',maxZoom:18}).addTo(lMap);
 setTimeout(function(){lMap.invalidateSize()},200);
 }
 
 function upd(lat,lng){
 if(m==='A'){latA=lat;lngA=lng;setM('B');}else{latB=lat;lngB=lng;}
-if(yMap){yMkA.geometry.setCoordinates(new Array(latA,lngA));yMkB.geometry.setCoordinates(new Array(latB,lngB));yLn.geometry.setCoordinates(new Array(new Array(latA,lngA),new Array(latB,lngB)));}
-if(lMap){lMkA.setLatLng(new Array(latA,lngA));lMkB.setLatLng(new Array(latB,lngB));lLn.setLatLngs(new Array(new Array(latA,lngA),new Array(latB,lngB)));}
+if(yMap){
+  yMkA.geometry.setCoordinates([latA,lngA]);
+  yMkB.geometry.setCoordinates([latB,lngB]);
+  yLn.geometry.setCoordinates([[latA,lngA],[latB,lngB]]);
+}
+if(lMap){
+  lMkA.setLatLng([latA,lngA]);
+  lMkB.setLatLng([latB,lngB]);
+  lLn.setLatLngs([[latA,lngA],[latB,lngB]]);
+}
 var km=Math.sqrt(Math.pow((latB-latA)*111,2)+Math.pow((lngB-lngA)*61,2))*1.3;
 var pr=Math.max(100,Math.round(80+km*28));
-document.getElementById('p1').innerText=pr+' ₽';document.getElementById('p2').innerText=Math.round(pr*1.5)+' ₽';
+document.getElementById('p1').innerText=pr+' ₽';
+document.getElementById('p2').innerText=Math.round(pr*1.5)+' ₽';
 }
 
 function tapSvg(e){
-var r=document.getElementById('b-svg').getBoundingClientRect(),x=Math.round(((e.clientX-r.left)/r.width)*100),y=Math.round(((e.clientY-r.top)/r.height)*100);
+var r=document.getElementById('b-svg').getBoundingClientRect(),
+    x=Math.round(((e.clientX-r.left)/r.width)*100),
+    y=Math.round(((e.clientY-r.top)/r.height)*100);
 if(m==='A'){sA={x:x,y:y};document.getElementById('sA').style.left=x+'%';document.getElementById('sA').style.top=y+'%';setM('B');}
 else{sB={x:x,y:y};document.getElementById('sB').style.left=x+'%';document.getElementById('sB').style.top=y+'%';}
 var pr=Math.max(100,Math.round(80+Math.sqrt(Math.pow(sB.x-sA.x,2)+Math.pow(sB.y-sA.y,2))*2));
-document.getElementById('p1').innerText=pr+' ₽';document.getElementById('p2').innerText=Math.round(pr*1.5)+' ₽';
+document.getElementById('p1').innerText=pr+' ₽';
+document.getElementById('p2').innerText=Math.round(pr*1.5)+' ₽';
 }
 
 function setM(v){m=v;document.getElementById('bA').className=v==='A'?'btn active':'btn';document.getElementById('bB').className=v==='B'?'btn active':'btn';document.getElementById('st').innerText=v==='A'?'Нажмите на карту для Точки А':'Нажмите на карту для Точки Б';}
@@ -134,22 +173,33 @@ function setT(id){document.getElementById('t1').className=id==='t1'?'btn active'
 
 function go(){
 var b=document.getElementById('obtn');
-if(b.innerText==='Отменить заказ'){clearInterval(tmr);if(yCar&&yMap)yMap.geoObjects.remove(yCar);if(lCar&&lMap)lMap.removeLayer(lCar);document.getElementById('scar').style.display='none';b.innerText='Заказать такси';setM('A');return;}
+if(b.innerText==='Отменить заказ'){
+  clearInterval(tmr);
+  if(yCar&&yMap)yMap.geoObjects.remove(yCar);
+  if(lCar&&lMap)lMap.removeLayer(lCar);
+  document.getElementById('scar').style.display='none';
+  b.innerText='Заказать такси';
+  setM('A');
+  return;
+}
 b.innerText='Ищем машину...';
 setTimeout(function(){
-b.innerText='Отменить заказ';document.getElementById('st').innerText='Машина выехала к точке А!';
-var sx=latA+0.006,sy=lngA+0.006,s=0;
-if(yMap){yCar=new ymaps.Placemark(new Array(sx,sy),{},{preset:'islands#yellowAutoIcon'});yMap.geoObjects.add(yCar);}
-if(lMap){lCar=L.circleMarker(new Array(sx,sy),{radius:11,color:'#b7950b',fillColor:'#fc0',fillOpacity:1}).addTo(lMap);}
-var sc=document.getElementById('scar'),fx=sA.x>50?sA.x-25:sA.x+25,fy=sA.y>50?sA.y-25:sA.y+25;
-sc.style.left=fx+'%';sc.style.top=fy+'%';sc.style.display='block';
-tmr=setInterval(function(){
-s++;var cx=sx+(latA-sx)*(s/25),cy=sy+(lngA-sy)*(s/25);
-if(yCar)yCar.geometry.setCoordinates(new Array(cx,cy));
-if(lCar)lCar.setLatLng(new Array(cx,cy));
-sc.style.left=(fx+(sA.x-fx)*(s/25))+'%';sc.style.top=(fy+(sA.y-fy)*(s/25))+'%';
-if(s>=25){clearInterval(tmr);document.getElementById('st').innerText='Водитель на месте! Выходите';}
-},150);
+  b.innerText='Отменить заказ';
+  document.getElementById('st').innerText='Машина выехала к точке А!';
+  var sx=latA+0.006,sy=lngA+0.006,s=0;
+  if(yMap){yCar=new ymaps.Placemark([sx,sy],{},{preset:'islands#yellowAutoIcon'});yMap.geoObjects.add(yCar);}
+  if(lMap){lCar=L.circleMarker([sx,sy],{radius:11,color:'#b7950b',fillColor:'#fc0',fillOpacity:1}).addTo(lMap);}
+  var sc=document.getElementById('scar'),fx=sA.x>50?sA.x-25:sA.x+25,fy=sA.y>50?sA.y-25:sA.y+25;
+  sc.style.left=fx+'%';sc.style.top=fy+'%';sc.style.display='block';
+  tmr=setInterval(function(){
+    s++;
+    var cx=sx+(latA-sx)*(s/25),cy=sy+(lngA-sy)*(s/25);
+    if(yCar)yCar.geometry.setCoordinates([cx,cy]);
+    if(lCar)lCar.setLatLng([cx,cy]);
+    sc.style.left=(fx+(sA.x-fx)*(s/25))+'%';
+    sc.style.top=(fy+(sA.y-fy)*(s/25))+'%';
+    if(s>=25){clearInterval(tmr);document.getElementById('st').innerText='Водитель на месте! Выходите';}
+  },150);
 },1200);
 }
 initY();
