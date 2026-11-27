@@ -33,7 +33,7 @@ function draw(){
   pins.innerHTML='';
   if(carPt){const cp=l2t(carPt.lat,carPt.lon,z),cd=document.createElement('div');cd.className='p';cd.textContent='🚕';cd.style.left=(W/2+(cp.x-c.x)*256)+'px';cd.style.top=(H/2+(cp.y-c.y)*256)+'px';pins.appendChild(cd);}
   pts.forEach((p,i)=>{if(!p)return;const tp=l2t(p.lat,p.lon,z),d=document.createElement('div');d.className='p';d.textContent=i===0?'🟢':(i===pts.length-1?'🔴':'🟡');d.style.left=(W/2+(tp.x-c.x)*256)+'px';d.style.top=(H/2+(tp.y-c.y)*256)+'px';pins.appendChild(d);});
-  document.getElementById('st2').textContent='v13 z'+z;calc();
+  document.getElementById('st2').textContent='v14 z'+z;calc();
 }
 function setT(v){tr=v;document.getElementById('t1').classList.toggle('on',v===1);document.getElementById('t2').classList.toggle('on',v===2);}
 function zm(d){z=Math.max(11,Math.min(18,z+d));draw();}
@@ -62,22 +62,19 @@ function saveState(obj){
   if(!obj){localStorage.removeItem('ns_ord');return;}
   localStorage.setItem('ns_ord',JSON.stringify(obj));
 }
+const KV="https://kvdb.io";
 function startPoll(id){
   if(pollTmr)clearInterval(pollTmr);
   pollTmr=setInterval(async()=>{
     try{
-      const r=await fetch('https://ntfy.sh');
-      const txt=await r.text();
-      const lines=txt.trim().split('\n').filter(Boolean);
-      if(!lines.length)return;
-      const ev=JSON.parse(lines.at(-1));
-      if(!ev.message)return;
-      const d=JSON.parse(ev.message);
+      const r=await fetch(KV+'taxi_ns_out_'+id+'?t='+Date.now());
+      if(!r.ok)return;
+      const d=await r.json();
       if(d.lat&&d.lon){carPt={lat:d.lat,lon:d.lon};draw();}
       if(d.text){st.textContent=d.text;const curS=JSON.parse(localStorage.getItem('ns_ord')||'{}');curS.status=d.text;saveState(curS);}
       if(d.st==='canc'||d.st==='done'){resetOrderUI(d.text||'Заказ завершён');}
     }catch{}
-  },3000);
+  },2500);
 }
 function resetOrderUI(msg){
   if(pollTmr){clearInterval(pollTmr);pollTmr=null;}
@@ -85,18 +82,11 @@ function resetOrderUI(msg){
   const btn=document.getElementById('obtn');btn.className='go';btn.textContent='Заказать такси';
   if(msg)st.textContent=msg;
 }
-async function sendMaxOrder(id,tn,route,ph){
-  const body={text:'🌐 ЗАКАЗ С САЙТА #'+id+' ('+tn+')\n🟢 Маршрут: '+route+'\n📱 Тел: '+ph,attachments:[{type:'inline_keyboard',payload:{buttons:[[{type:'callback',text:'✅ Принять заказ',payload:'mtake_'+id}]]}}]};
-  for(const uid of MAX_DRVS){
-    fetch(MAX_API+'&user_id='+Number(uid),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).catch(()=>{});
-  }
-}
 async function sendOrd(){
   const btn=document.getElementById('obtn');
   if(actId){
     const oldId=actId;
-    fetch('https://ntfy.sh',{method:'POST',body:JSON.stringify({act:'canc',oid:oldId})}).catch(()=>{});
-    fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:ADM,text:'🚫 Клиент отменил заказ с сайта #'+oldId})}).catch(()=>{});
+    await fetch(KV+'web_in',{method:'POST',body:JSON.stringify({act:'canc',oid:oldId})}).catch(()=>{});
     resetOrderUI('Заказ #'+oldId+' отменён');return;
   }
   const a=[];for(let i=0;i<pts.length;i++){const v=document.getElementById('in'+i).value.trim();if(v)a.push(v);}
@@ -107,13 +97,10 @@ async function sendOrd(){
   const tn=(tr===1?'Эконом':'Комфорт')+' ('+document.getElementById(tr===1?'p1':'p2').textContent+')';
   if(tg&&tg.initData){tg.sendData(JSON.stringify({fr:a.at(0),to:a.slice(1).join(' -> '),tar:tc,pr:document.getElementById(tr===1?'p1':'p2').textContent,ph:ph}));return;}
   actId=(Date.now()%9000+1000);
-  const fr=a.at(0),to=a.slice(1).join(' -> '),route=a.join(' -> ');
+  const fr=a.at(0),to=a.slice(1).join(' -> ');
   const stTxt='Заказ #'+actId+' отправлен водителям! Ищем машину...';
   saveState({id:actId,fr:fr,to:to,ph:ph,status:stTxt});
-  fetch('https://ntfy.sh',{method:'POST',body:JSON.stringify({act:'new',oid:actId,fr:fr,to:to,tn:tn,tc:tc,ph:ph})}).catch(()=>{});
-  sendMaxOrder(actId,tn,route,ph);
-  const txt='🌐 ЗАКАЗ С САЙТА #'+actId+' ('+tn+')\n📍 Маршрут: '+route+'\n📱 Тел: '+ph;
-  await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:ADM,text:txt,reply_markup:{inline_keyboard:[[{text:'✅ Принять заказ',callback_data:'wtake_'+actId}]]}})});
+  await fetch(KV+'web_in',{method:'POST',body:JSON.stringify({act:'new',oid:actId,fr:fr,to:to,tn:tn,tc:tc,ph:ph})});
   startPoll(actId);
   btn.className='canc';btn.textContent='❌ Отменить заказ #'+actId;st.textContent=stTxt;
 }
