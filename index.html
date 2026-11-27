@@ -5,23 +5,23 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="referrer" content="no-referrer">
 <title>Такси Полевской</title>
-<link rel="stylesheet" href="https://unpkg.com"/>
-<script src="https://unpkg.com"></script>
+<link rel="stylesheet" href="https://cloudflare.com"/>
+<script src="https://cloudflare.com"></script>
 <style>
 body{font-family:sans-serif;margin:0;padding:8px;background:#f0f2f5}
 .c{background:#fff;padding:10px;border-radius:14px;max-width:460px;margin:0 auto}
 .r{display:flex;gap:6px;margin-bottom:8px}
 .b{flex:1;padding:10px 4px;border:2px solid #ddd;border-radius:9px;background:#fff;font-weight:700}
 .on{border-color:#fc0;background:#fff9db}
-#map{height:320px;border-radius:10px;margin-bottom:8px;border:2px solid #b0c4de;z-index:1}
+#map{height:320px;border-radius:10px;margin-bottom:8px;border:2px solid #b0c4de;z-index:1;background:#e5e9ec}
 .go{width:100%;background:#fc0;border:none;padding:14px;font-size:16px;font-weight:700;border-radius:10px}
 </style>
 </head>
 <body>
 <div class="c">
 <div class="r">
-<button class="b on" id="p1" onclick="setProv('arcgis')">ArcGIS</button>
-<button class="b" id="p2" onclick="setProv('osm')">OSM</button>
+<button class="b on" id="p1" onclick="setProv('osm')">OSM</button>
+<button class="b" id="p2" onclick="setProv('arcgis')">ArcGIS</button>
 <button class="b" id="p3" onclick="setProv('2gis')">2ГИС</button>
 </div>
 <div id="st" style="text-align:center;font-weight:700;margin-bottom:6px">Точка А: нажмите на карту</div>
@@ -40,18 +40,18 @@ body{font-family:sans-serif;margin:0;padding:8px;background:#f0f2f5}
 var mode='A', latA=56.4426, lngA=60.1819, latB=56.4530, lngB=60.1980;
 var map=L.map('map').setView([56.4475, 60.1895], 14);
 var urls={
-  'arcgis':'https://arcgisonline.com{z}/{y}/{x}',
   'osm':'https://openstreetmap.org{z}/{x}/{y}.png',
+  'arcgis':'https://arcgisonline.com{z}/{y}/{x}',
   '2gis':'https://tile{s}://{x}&y={y}&z={z}&v=1'
 };
-var layer=L.tileLayer(urls['arcgis'],{subdomains:'0123',maxZoom:18}).addTo(map);
+var layer=L.tileLayer(urls['osm'],{subdomains:'0123',maxZoom:18}).addTo(map);
 var mkA=L.marker([latA,lngA]).addTo(map).bindPopup('Точка А');
 var mkB=L.marker([latB,lngB]).addTo(map).bindPopup('Точка Б');
 var line=L.polyline([[latA,lngA],[latB,lngB]],{color:'#222',weight:4}).addTo(map);
 
 function setProv(p){
-  document.getElementById('p1').className=(p==='arcgis')?'b on':'b';
-  document.getElementById('p2').className=(p==='osm')?'b on':'b';
+  document.getElementById('p1').className=(p==='osm')?'b on':'b';
+  document.getElementById('p2').className=(p==='arcgis')?'b on':'b';
   document.getElementById('p3').className=(p==='2gis')?'b on':'b';
   map.removeLayer(layer);
   layer=L.tileLayer(urls[p],{subdomains:'0123',maxZoom:18}).addTo(map);
