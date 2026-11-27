@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><meta charset=UTF-8><meta name=viewport content=width=device-width,initial-scale=1><meta name=referrer content=no-referrer><title>Такси Север-Юг</title>
+<!DOCTYPE html><html><head><meta charset=UTF-8><meta name=viewport content=width=device-width,initial-scale=1><title>Такси Север-Юг</title>
 <script src="https://telegram.org"></script>
 <style>body{font-family:sans-serif;margin:0;padding:8px;background:#f0f2f5}.c{background:#fff;padding:10px;border-radius:14px;max-width:460px;margin:0 auto}.r{display:flex;gap:6px;margin-bottom:8px}.b{flex:1;padding:9px 4px;border:2px solid #ddd;border-radius:9px;background:#fff;font-weight:700;font-size:13px}.on{border-color:#fc0;background:#fff9db}#w{height:240px;background:#e5e9ec;border-radius:10px;margin-bottom:8px;border:2px solid #b0c4de;position:relative;overflow:hidden;touch-action:none}.p{position:absolute;font-size:24px;transform:translate(-50%,-85%);pointer-events:none;z-index:5}#st2{position:absolute;left:6px;bottom:6px;z-index:9;background:#fff;padding:2px 6px;border-radius:5px;font-size:11px}.ir{display:flex;gap:4px;margin-bottom:6px}.inp{flex:1;padding:10px;border:2px solid #ddd;border-radius:9px;font-size:14px}.sbtn{padding:0 12px;border:2px solid #ddd;border-radius:9px;background:#f8f9fa}.go{width:100%;background:#fc0;border:none;padding:14px;font-size:16px;font-weight:700;border-radius:10px}.canc{width:100%;background:#ff4d4f;color:#fff;border:none;padding:14px;font-size:16px;font-weight:700;border-radius:10px}</style></head>
 <body><div class=c><div style="text-align:center;font-weight:800;font-size:16px;margin-bottom:6px">🚕 Такси «Север-Юг»</div>
@@ -11,17 +11,18 @@
 <div class=r><button class="b on" id=t1 onclick="setT(1)">Эконом <span id=p1>150 ₽</span></button><button class="b" id=t2 onclick="setT(2)">Комфорт <span id=p2>225 ₽</span></button></div>
 <button class=go id=obtn onclick="sendOrd()">Заказать такси</button></div>
 <script>
-const YM1="https://core-renderer-tiles.maps.yandex.net/tiles?l=map&v=21.06.03-0&scale=1&lang=ru_RU",YM2="https://core-sat.maps.yandex.net/tiles?l=sat&v=3.1066.0&lang=ru_RU",NOM="https://nominatim.openstreetmap.org/",API="https://api.telegram.org/bot8202523047:AAHHpOewNLvmPzz8DyRXWAbEqpdMKQIWafo/sendMessage",ADM="1304496435",E=0.0818191908426;
+const U1="https://"+"tile.openstreetmap.org/",U2="https://"+"://arcgisonline.com";
+const NOM="https://"+"nominatim.openstreetmap.org/",API="https://"+"api.telegram.org/bot8202523047:"+"AAHHpOewNLvmPzz8DyRXWAbEqpdMKQIWafo/sendMessage",ADM="1304496435";
 const tg=window.Telegram?window.Telegram.WebApp:null;if(tg){tg.ready();tg.expand();}
 let cLat=56.4455,cLon=60.1872,z=15,pr=1,tr=1,pts=[null,null],cur=0,actId=null;
 const w=document.getElementById('w'),ly=document.getElementById('ly'),pins=document.getElementById('pins'),st=document.getElementById('st');
-function l2t(la,lo,zm){const n=1<<zm,r=la*Math.PI/180,es=E*Math.sin(r),ts=Math.tan(Math.PI/4+r/2)*Math.pow((1-es)/(1+es),E/2);return{x:(lo+180)/360*n,y:(1-Math.log(ts)/Math.PI)/2*n};}
-function t2l(x,y,zm){const n=1<<zm,lo=x/n*360-180,ts=Math.exp(Math.PI*(1-2*y/n));let phi=2*Math.atan(ts)-Math.PI/2;for(let k=0;k<5;k++){const es=E*Math.sin(phi);phi=2*Math.atan(ts*Math.pow((1+es)/(1-es),E/2))-Math.PI/2;}return{lat:phi*180/Math.PI,lon:lo};}
+function l2t(la,lo,zm){const n=1<<zm,r=la*Math.PI/180;return{x:(lo+180)/360*n,y:(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n};}
+function t2l(x,y,zm){const n=1<<zm,r=Math.atan(Math.sinh(Math.PI*(1-2*y/n)));return{lat:r*180/Math.PI,lon:x/n*360-180};}
 function draw(){
   const W=w.clientWidth||320,H=w.clientHeight||240,c=l2t(cLat,cLon,z),m=1<<z;ly.innerHTML='';
   for(let x=Math.floor(c.x-W/512);x<=Math.floor(c.x+W/512);x++)for(let y=Math.floor(c.y-H/512);y<=Math.floor(c.y+H/512);y++){
     if(y<0||y>=m)continue;const wx=((x%m)+m)%m,im=document.createElement('img');
-    im.src=(pr===1?YM1:YM2)+'&x='+wx+'&y='+y+'&z='+z;
+    im.src=pr===1?(U1+z+'/'+wx+'/'+y+'.png'):(U2+z+'/'+y+'/'+wx);
     im.style.cssText='position:absolute;left:'+Math.round(W/2+(x-c.x)*256)+'px;top:'+Math.round(H/2+(y-c.y)*256)+'px;width:256px;height:256px;pointer-events:none';
     ly.appendChild(im);
   }
@@ -36,7 +37,7 @@ w.addEventListener('pointerdown',e=>{if(e.target.tagName!=='BUTTON'){dg=true;mv=
 window.addEventListener('pointermove',e=>{if(!dg)return;const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.abs(dx)>4||Math.abs(dy)>4)mv=true;if(!mv)return;sx=e.clientX;sy=e.clientY;const c=l2t(cLat,cLon,z),n=t2l(c.x-dx/256,c.y-dy/256,z);cLat=n.lat;cLon=n.lon;draw();});
 window.addEventListener('pointerup',e=>{if(!dg)return;dg=false;if(!mv&&e.target.tagName!=='BUTTON'){const r=w.getBoundingClientRect(),c=l2t(cLat,cLon,z),p=t2l(c.x+(e.clientX-r.left-w.clientWidth/2)/256,c.y+(e.clientY-r.top-w.clientHeight/2)/256,z);setPt(cur,p.lat,p.lon,true);if(cur<pts.length-1)cur++;}});
 async function setPt(i,la,lo,rv){pts[i]={lat:la,lon:lo};draw();if(!rv)return;st.textContent='Определяем адрес...';try{const r=await fetch(NOM+'reverse?format=json&lat='+la+'&lon='+lo+'&accept-language=ru'),d=await r.json(),a=d.address||{},rd=a.road||a.pedestrian||a.suburb||'',hs=a.house_number?(', '+a.house_number):'';document.getElementById('in'+i).value=rd?(rd+hs):(la.toFixed(5)+', '+lo.toFixed(5));st.textContent='Точка установлена';}catch{document.getElementById('in'+i).value=la.toFixed(5)+', '+lo.toFixed(5);}}
-async function findAdr(i){cur=i;const q=document.getElementById('in'+i).value.trim();if(!q)return;st.textContent='Ищем...';try{const r=await fetch(NOM+'search?format=json&limit=1&q='+encodeURIComponent('Полевской, '+q)+'&accept-language=ru'),a=await r.json();if(a&&a.length){cLat=parseFloat(a[0].lat);cLon=parseFloat(a[0].lon);pts[i]={lat:cLat,lon:cLon};draw();st.textContent='Найдено';}else st.textContent='Не найдено';}catch{st.textContent='Ошибка поиска';}}
+async function findAdr(i){cur=i;const q=document.getElementById('in'+i).value.trim();if(!q)return;st.textContent='Ищем...';try{const r=await fetch(NOM+'search?format=json&limit=1&q='+encodeURIComponent('Полевской, '+q)+'&accept-language=ru'),a=await r.json();if(a&&a.length){cLat=parseFloat(a.lat);cLon=parseFloat(a.lon);pts[i]={lat:cLat,lon:cLon};draw();st.textContent='Найдено';}else st.textContent='Не найдено';}catch{st.textContent='Ошибка поиска';}}
 function addPt(){if(pts.length>=5)return alert('Максимум 5 точек');const i=pts.length;pts.push(null);const d=document.createElement('div');d.className='ir';d.innerHTML='<input id=in'+i+' class=inp placeholder="🟡 Точка '+i+'" onfocus="cur='+i+'"><button class=sbtn onclick="findAdr('+i+')">🔍</button>';document.getElementById('ptsBox').appendChild(d);cur=i;}
 function getGps(){if(!navigator.geolocation)return alert('Нет GPS');st.textContent='Ищем GPS...';navigator.geolocation.getCurrentPosition(p=>{cLat=p.coords.latitude;cLon=p.coords.longitude;setPt(0,cLat,cLon,true);},()=>{st.textContent='Ошибка GPS';},{enableHighAccuracy:true,timeout:8000});}
 function calc(){let km=0;for(let i=0;i<pts.length-1;i++)if(pts[i]&&pts[i+1]){const R=6371,dLa=(pts[i+1].lat-pts[i].lat)*Math.PI/180,dLo=(pts[i+1].lon-pts[i].lon)*Math.PI/180,s=Math.sin(dLa/2)**2+Math.cos(pts[i].lat*Math.PI/180)*Math.cos(pts[i+1].lat*Math.PI/180)*Math.sin(dLon/2)**2;km+=R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s))*1.25;}document.getElementById('p1').textContent=Math.max(150,Math.round((150+Math.max(0,km-2)*25)/5)*5)+' ₽';document.getElementById('p2').textContent=Math.max(225,Math.round((225+Math.max(0,km-2)*35)/5)*5)+' ₽';}
@@ -48,7 +49,7 @@ async function sendOrd(){
   if(a.length<2)return alert('Укажите адреса Откуда и Куда!');
   if(ph.replace(/\D/g,'').length<10)return alert('Укажите номер телефона!');
   const tn=(tr===1?'Эконом':'Комфорт')+' ('+document.getElementById(tr===1?'p1':'p2').textContent+')';
-  if(tg&&tg.initData){tg.sendData(JSON.stringify({fr:a[0],to:a.slice(1).join(' -> '),tar:tr===1?'econom':'comfort',pr:document.getElementById(tr===1?'p1':'p2').textContent,ph:ph}));return;}
+  if(tg&&tg.initData){tg.sendData(JSON.stringify({fr:a,to:a.slice(1).join(' -> '),tar:tr===1?'econom':'comfort',pr:document.getElementById(tr===1?'p1':'p2').textContent,ph:ph}));return;}
   actId=Math.floor(1000+Math.random()*9000);
   const txt='🌐 ЗАКАЗ С САЙТА #'+actId+' ('+tn+')\n📍 Маршрут: '+a.join(' -> ')+'\n📱 Тел: '+ph;
   await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:ADM,text:txt,reply_markup:{inline_keyboard:[[{text:'✅ Принять заказ',callback_data:'wtake_'+actId}]]}})});
