@@ -10,7 +10,7 @@
 var m=1,pr=1,z=14,cLa=56.4475,cLn=60.1895,laA=56.4426,lnA=60.1819,laB=56.4530,lnB=60.1980;
 function u(p,x,y,z){
   var h=location.protocol+String.fromCharCode(47,47);
-  if(p==1)return h+'tile0.maps.'+'://2gis.com;
+  if(p==1)return h+"tile0.maps."+("2g"+"://is.com")+x+String.fromCharCode(38)+"y="+y+String.fromCharCode(38)+"z="+z;
   if(p==2)return h+'server.arcgisonline'+'.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/'+z+'/'+y+'/'+x;
   return h+'tile.openstreetmap'+'.org/'+z+'/'+x+'/'+y+'.png';
 }
