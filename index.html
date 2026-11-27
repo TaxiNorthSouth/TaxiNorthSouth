@@ -2,27 +2,26 @@
 <script src="https://telegram.org"></script>
 <style>body{font-family:sans-serif;margin:0;padding:8px;background:#f0f2f5}.c{background:#fff;padding:10px;border-radius:14px;max-width:460px;margin:0 auto}.r{display:flex;gap:6px;margin-bottom:8px}.b{flex:1;padding:9px 4px;border:2px solid #ddd;border-radius:9px;background:#fff;font-weight:700;font-size:13px}.on{border-color:#fc0;background:#fff9db}#w{height:240px;background:#e5e9ec;border-radius:10px;margin-bottom:8px;border:2px solid #b0c4de;position:relative;overflow:hidden;touch-action:none}.p{position:absolute;font-size:24px;transform:translate(-50%,-85%);pointer-events:none;z-index:5}#st2{position:absolute;left:6px;bottom:6px;z-index:9;background:#fff;padding:2px 6px;border-radius:5px;font-size:11px}.ir{display:flex;gap:4px;margin-bottom:6px}.inp{flex:1;padding:10px;border:2px solid #ddd;border-radius:9px;font-size:14px}.sbtn{padding:0 12px;border:2px solid #ddd;border-radius:9px;background:#f8f9fa}.go{width:100%;background:#fc0;border:none;padding:14px;font-size:16px;font-weight:700;border-radius:10px}.canc{width:100%;background:#ff4d4f;color:#fff;border:none;padding:14px;font-size:16px;font-weight:700;border-radius:10px}</style></head>
 <body><div class=c><div style="text-align:center;font-weight:800;font-size:16px;margin-bottom:6px">🚕 Такси «Север-Юг»</div>
-<div class=r><button class="b on" id=b1 onclick="setP(1)">OSM (Дома)</button><button class=b id=b2 onclick="setP(2)">ArcGIS</button></div>
+<div class=r><button class="b on" id=b1 onclick="setP(1)">Карта (Дома)</button><button class="b" id=b2 onclick="setP(2)">Спутник</button></div>
 <div id=st style="text-align:center;font-weight:700;margin-bottom:6px;font-size:13px">Укажите адреса маршрута</div>
-<div id=w><div id=ly style="position:absolute;inset:0"></div><div id=pins></div><div style="position:absolute;right:6px;top:6px;z-index:9"><button onclick="zm(1)">+</button><button onclick="zm(-1)">-</button></div><div id=st2>v4</div></div>
+<div id=w><div id=ly style="position:absolute;inset:0"></div><div id=pins></div><div style="position:absolute;right:6px;top:6px;z-index:9"><button onclick="zm(1)">+</button><button onclick="zm(-1)">-</button></div><div id=st2>v7</div></div>
 <div id=ptsBox><div class=ir><input id=in0 class=inp placeholder="🟢 Откуда (улица, дом)"><button class=sbtn onclick="findAdr(0)">🔍</button></div><div class=ir><input id=in1 class=inp placeholder="🔴 Куда (улица, дом)"><button class=sbtn onclick="findAdr(1)">🔍</button></div></div>
 <div class=r><button class=b onclick="addPt()">➕ Добавить точку</button><button class=b onclick="getGps()">📍 Мой GPS</button></div>
 <div class=ir><input id=phInp class=inp type=tel placeholder="📱 Ваш телефон"></div>
-<div class=r><button class="b on" id=t1 onclick="setT(1)">Эконом <span id=p1>150 ₽</span></button><button class=b id=t2 onclick="setT(2)">Комфорт <span id=p2>225 ₽</span></button></div>
+<div class=r><button class="b on" id=t1 onclick="setT(1)">Эконом <span id=p1>150 ₽</span></button><button class="b" id=t2 onclick="setT(2)">Комфорт <span id=p2>225 ₽</span></button></div>
 <button class=go id=obtn onclick="sendOrd()">Заказать такси</button></div>
 <script>
-const U1="https://://cartocdn.com/rastertiles/voyager/",U2="https://://arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/",U3="https://://arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/",NOM="https://nominatim.openstreetmap.org/",API="https://api.telegram.org/bot8202523047:AAHHpOewNLvmPzz8DyRXWAbEqpdMKQIWafo/sendMessage",ADM="1304496435";
+const YM1="https://core-renderer-tiles.maps.yandex.net/tiles?l=map&v=21.06.03-0&scale=1&lang=ru_RU",YM2="https://core-sat.maps.yandex.net/tiles?l=sat&v=3.1066.0&lang=ru_RU",NOM="https://nominatim.openstreetmap.org/",API="https://api.telegram.org/bot8202523047:AAHHpOewNLvmPzz8DyRXWAbEqpdMKQIWafo/sendMessage",ADM="1304496435",E=0.0818191908426;
 const tg=window.Telegram?window.Telegram.WebApp:null;if(tg){tg.ready();tg.expand();}
 let cLat=56.4455,cLon=60.1872,z=15,pr=1,tr=1,pts=[null,null],cur=0,actId=null;
 const w=document.getElementById('w'),ly=document.getElementById('ly'),pins=document.getElementById('pins'),st=document.getElementById('st');
-function l2t(la,lo,zm){const n=1<<zm,r=la*Math.PI/180;return{x:(lo+180)/360*n,y:(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n};}
-function t2l(x,y,zm){const n=1<<zm,r=Math.atan(Math.sinh(Math.PI*(1-2*y/n)));return{lat:r*180/Math.PI,lon:x/n*360-180};}
+function l2t(la,lo,zm){const n=1<<zm,r=la*Math.PI/180,es=E*Math.sin(r),ts=Math.tan(Math.PI/4+r/2)*Math.pow((1-es)/(1+es),E/2);return{x:(lo+180)/360*n,y:(1-Math.log(ts)/Math.PI)/2*n};}
+function t2l(x,y,zm){const n=1<<zm,lo=x/n*360-180,ts=Math.exp(Math.PI*(1-2*y/n));let phi=2*Math.atan(ts)-Math.PI/2;for(let k=0;k<5;k++){const es=E*Math.sin(phi);phi=2*Math.atan(ts*Math.pow((1+es)/(1-es),E/2))-Math.PI/2;}return{lat:phi*180/Math.PI,lon:lo};}
 function draw(){
   const W=w.clientWidth||320,H=w.clientHeight||240,c=l2t(cLat,cLon,z),m=1<<z;ly.innerHTML='';
   for(let x=Math.floor(c.x-W/512);x<=Math.floor(c.x+W/512);x++)for(let y=Math.floor(c.y-H/512);y<=Math.floor(c.y+H/512);y++){
-    if(y<0||y>=m)continue;const wx=((x%m)+m)%m,im=document.createElement('img');im.referrerPolicy='no-referrer';
-    const s1=pr===1?(U1+z+'/'+wx+'/'+y+'.png'):(U2+z+'/'+y+'/'+wx),s2=U3+z+'/'+y+'/'+wx;
-    im.src=s1;im.onerror=()=>{if(im.src!==s2)im.src=s2;};
+    if(y<0||y>=m)continue;const wx=((x%m)+m)%m,im=document.createElement('img');
+    im.src=(pr===1?YM1:YM2)+'&x='+wx+'&y='+y+'&z='+z;
     im.style.cssText='position:absolute;left:'+Math.round(W/2+(x-c.x)*256)+'px;top:'+Math.round(H/2+(y-c.y)*256)+'px;width:256px;height:256px;pointer-events:none';
     ly.appendChild(im);
   }
