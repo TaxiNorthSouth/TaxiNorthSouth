@@ -33,7 +33,7 @@ function draw(){
   pins.innerHTML='';
   if(carPt){const cp=l2t(carPt.lat,carPt.lon,z),cd=document.createElement('div');cd.className='p';cd.textContent='🚕';cd.style.left=(W/2+(cp.x-c.x)*256)+'px';cd.style.top=(H/2+(cp.y-c.y)*256)+'px';pins.appendChild(cd);}
   pts.forEach((p,i)=>{if(!p)return;const tp=l2t(p.lat,p.lon,z),d=document.createElement('div');d.className='p';d.textContent=i===0?'🟢':(i===pts.length-1?'🔴':'🟡');d.style.left=(W/2+(tp.x-c.x)*256)+'px';d.style.top=(H/2+(tp.y-c.y)*256)+'px';pins.appendChild(d);});
-  document.getElementById('st2').textContent='v14 z'+z;calc();
+  document.getElementById('st2').textContent='v16 z'+z;calc();
 }
 function setT(v){tr=v;document.getElementById('t1').classList.toggle('on',v===1);document.getElementById('t2').classList.toggle('on',v===2);}
 function zm(d){z=Math.max(11,Math.min(18,z+d));draw();}
@@ -62,14 +62,23 @@ function saveState(obj){
   if(!obj){localStorage.removeItem('ns_ord');return;}
   localStorage.setItem('ns_ord',JSON.stringify(obj));
 }
-const KV="https://kvdb.io";
+const TG_BASE="https://"+"api.telegram.org/bot8202523047:"+"AAHHpOewNLvmPzz8DyRXWAbEqpdMKQIWafo/";
+const SYNC_CH="-1005956653266";
+async function sendCh(obj){
+  const r=await fetch(TG_BASE+'sendMessage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:SYNC_CH,text:JSON.stringify(obj)})});
+  const j=await r.json();
+  if(!j.ok)throw new Error(j.description||'TG error');
+}
 function startPoll(id){
   if(pollTmr)clearInterval(pollTmr);
   pollTmr=setInterval(async()=>{
     try{
-      const r=await fetch(KV+'taxi_ns_out_'+id+'?t='+Date.now());
-      if(!r.ok)return;
-      const d=await r.json();
+      const r=await fetch(TG_BASE+'getChat?chat_id='+SYNC_CH+'&t='+Date.now());
+      const j=await r.json();
+      if(!j.ok||!j.result||!j.result.description)return;
+      const cur=JSON.parse(j.result.description);
+      const d=cur['taxi_ns_out_'+id];
+      if(!d)return;
       if(d.lat&&d.lon){carPt={lat:d.lat,lon:d.lon};draw();}
       if(d.text){st.textContent=d.text;const curS=JSON.parse(localStorage.getItem('ns_ord')||'{}');curS.status=d.text;saveState(curS);}
       if(d.st==='canc'||d.st==='done'){resetOrderUI(d.text||'Заказ завершён');}
@@ -86,7 +95,7 @@ async function sendOrd(){
   const btn=document.getElementById('obtn');
   if(actId){
     const oldId=actId;
-    await fetch(KV+'web_in',{method:'POST',body:JSON.stringify({act:'canc',oid:oldId})}).catch(()=>{});
+    await sendCh({act:'canc',oid:oldId}).catch(()=>{});
     resetOrderUI('Заказ #'+oldId+' отменён');return;
   }
   const a=[];for(let i=0;i<pts.length;i++){const v=document.getElementById('in'+i).value.trim();if(v)a.push(v);}
@@ -99,10 +108,15 @@ async function sendOrd(){
   actId=(Date.now()%9000+1000);
   const fr=a.at(0),to=a.slice(1).join(' -> ');
   const stTxt='Заказ #'+actId+' отправлен водителям! Ищем машину...';
-  saveState({id:actId,fr:fr,to:to,ph:ph,status:stTxt});
-  await fetch(KV+'web_in',{method:'POST',body:JSON.stringify({act:'new',oid:actId,fr:fr,to:to,tn:tn,tc:tc,ph:ph})});
-  startPoll(actId);
-  btn.className='canc';btn.textContent='❌ Отменить заказ #'+actId;st.textContent=stTxt;
+  btn.disabled=true;btn.textContent='⏳ Отправка...';
+  try{
+    await sendCh({act:'new',oid:actId,fr:fr,to:to,tn:tn,tc:tc,ph:ph});
+    saveState({id:actId,fr:fr,to:to,ph:ph,status:stTxt});
+    startPoll(actId);
+    btn.className='canc';btn.textContent='❌ Отменить заказ #'+actId;st.textContent=stTxt;
+  }catch(e){
+    actId=null;alert('Ошибка отправки: '+e.message);btn.className='go';btn.textContent='Заказать такси';
+  }finally{btn.disabled=false;}
 }
 (function restore(){
   try{
