@@ -10,10 +10,16 @@
 <div class=r><button class="b on" id=t1 onclick="setT(1)">Эконом <span id=p1>150 ₽</span></button><button class=b id=t2 onclick="setT(2)">Комфорт <span id=p2>225 ₽</span></button></div>
 <button class=go id=obtn onclick="sendOrd()">Заказать такси</button></div>
 <script>
-const U1="https://tile.openstreetmap.org/",NOM="https://nominatim.openstreetmap.org/",API="https://api.telegram.org/bot8202523047:AAHHpOewNLvmPzz8DyRXWAbEqpdMKQIWafo/sendMessage",ADM="1304496435";
+const U1="https://"+"tile.openstreetmap.org/";
+const NOM="https://"+"nominatim.openstreetmap.org/";
+const API="https://"+"api.telegram.org/bot8202523047:"+"AAHHpOewNLvmPzz8DyRXWAbEqpdMKQIWafo/sendMessage";
+const MAX_API="https://"+"platform-api.max.ru/messages?access_token=f9LHodD0cOK6QaPxAdAjQ6eEFHvlZEdvsaCIXrwpm-7I2wvUfde_65Z0qjrdqvZU9uStkSbp9_TGY_JQlA3_";
+const MAX_DRVS="219995701,39765796,31300219,42019045".split(",");
+const ADM="1304496435";
 const tg=window.Telegram?window.Telegram.WebApp:null;if(tg){tg.ready();tg.expand();}
-let cLat=56.8389,cLon=60.6057,z=15,tr=1,pts=[null,null],cur=0,actId=null,curCity="Екатеринбург",carPt=null,es=null;
+let cLat=56.8389,cLon=60.6057,z=15,tr=1,pts=[null,null],cur=0,actId=null,curCity="Екатеринбург",carPt=null,pollTmr=null;
 const w=document.getElementById('w'),ly=document.getElementById('ly'),pins=document.getElementById('pins'),st=document.getElementById('st');
+
 function l2t(la,lo,zm){const n=1<<zm,r=la*Math.PI/180;return{x:(lo+180)/360*n,y:(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n};}
 function t2l(x,y,zm){const n=1<<zm,r=Math.atan(Math.sinh(Math.PI*(1-2*y/n)));return{lat:r*180/Math.PI,lon:x/n*360-180};}
 function draw(){
@@ -24,8 +30,10 @@ function draw(){
     im.style.cssText='position:absolute;left:'+Math.round(W/2+(x-c.x)*256)+'px;top:'+Math.round(H/2+(y-c.y)*256)+'px;width:256px;height:256px;pointer-events:none';
     ly.appendChild(im);
   }
-  pins.innerHTML='';if(carPt){const cp=l2t(carPt.lat,carPt.lon,z),cd=document.createElement('div');cd.className='p';cd.textContent='🚕';cd.style.left=(W/2+(cp.x-c.x)*256)+'px';cd.style.top=(H/2+(cp.y-c.y)*256)+'px';pins.appendChild(cd);}pts.forEach((p,i)=>{if(!p)return;const tp=l2t(p.lat,p.lon,z),d=document.createElement('div');d.className='p';d.textContent=i===0?'🟢':(i===pts.length-1?'🔴':'🟡');d.style.left=(W/2+(tp.x-c.x)*256)+'px';d.style.top=(H/2+(tp.y-c.y)*256)+'px';pins.appendChild(d);});
-  document.getElementById('st2').textContent='v12 z'+z;calc();
+  pins.innerHTML='';
+  if(carPt){const cp=l2t(carPt.lat,carPt.lon,z),cd=document.createElement('div');cd.className='p';cd.textContent='🚕';cd.style.left=(W/2+(cp.x-c.x)*256)+'px';cd.style.top=(H/2+(cp.y-c.y)*256)+'px';pins.appendChild(cd);}
+  pts.forEach((p,i)=>{if(!p)return;const tp=l2t(p.lat,p.lon,z),d=document.createElement('div');d.className='p';d.textContent=i===0?'🟢':(i===pts.length-1?'🔴':'🟡');d.style.left=(W/2+(tp.x-c.x)*256)+'px';d.style.top=(H/2+(tp.y-c.y)*256)+'px';pins.appendChild(d);});
+  document.getElementById('st2').textContent='v13 z'+z;calc();
 }
 function setT(v){tr=v;document.getElementById('t1').classList.toggle('on',v===1);document.getElementById('t2').classList.toggle('on',v===2);}
 function zm(d){z=Math.max(11,Math.min(18,z+d));draw();}
@@ -49,30 +57,47 @@ async function findAdr(i){
 function addPt(){if(pts.length>=5)return alert('Максимум 5 точек');const i=pts.length;pts.push(null);const d=document.createElement('div');d.className='ir';d.innerHTML='<input id=in'+i+' class=inp placeholder="🟡 Точка '+i+'" onfocus="cur='+i+'"><button class=sbtn onclick="findAdr('+i+')">🔍</button>';document.getElementById('ptsBox').appendChild(d);cur=i;}
 function getGps(){if(!navigator.geolocation)return alert('Нет GPS');st.textContent='Ищем GPS...';navigator.geolocation.getCurrentPosition(p=>{cLat=p.coords.latitude;cLon=p.coords.longitude;setPt(0,cLat,cLon,true);},()=>{st.textContent='Ошибка GPS';},{enableHighAccuracy:true,timeout:8000});}
 function calc(){let km=0;for(let i=0;i<pts.length-1;i++)if(pts[i]&&pts[i+1]){const R=6371,dLa=(pts[i+1].lat-pts[i].lat)*Math.PI/180,dLo=(pts[i+1].lon-pts[i].lon)*Math.PI/180,s=Math.sin(dLa/2)**2+Math.cos(pts[i].lat*Math.PI/180)*Math.cos(pts[i+1].lat*Math.PI/180)*Math.sin(dLo/2)**2;km+=R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s))*1.25;}document.getElementById('p1').textContent=Math.max(150,Math.round((150+Math.max(0,km-2)*25)/5)*5)+' ₽';document.getElementById('p2').textContent=Math.max(225,Math.round((225+Math.max(0,km-2)*35)/5)*5)+' ₽';}
-function listenOrder(id){
-  if(es)es.close();
-  es=new EventSource('https://ntfy.sh');
-  es.onmessage=e=>{
+
+function saveState(obj){
+  if(!obj){localStorage.removeItem('ns_ord');return;}
+  localStorage.setItem('ns_ord',JSON.stringify(obj));
+}
+function startPoll(id){
+  if(pollTmr)clearInterval(pollTmr);
+  pollTmr=setInterval(async()=>{
     try{
-      const ev=JSON.parse(e.data);if(!ev.message)return;
+      const r=await fetch('https://ntfy.sh');
+      const txt=await r.text();
+      const lines=txt.trim().split('\n').filter(Boolean);
+      if(!lines.length)return;
+      const ev=JSON.parse(lines.at(-1));
+      if(!ev.message)return;
       const d=JSON.parse(ev.message);
       if(d.lat&&d.lon){carPt={lat:d.lat,lon:d.lon};draw();}
-      if(d.text){st.textContent=d.text;}
-      if(d.st==='canc'||d.st==='done'){
-        const btn=document.getElementById('obtn');
-        actId=null;carPt=null;draw();btn.className='go';btn.textContent='Заказать такси';
-        if(es){es.close();es=null;}
-      }
+      if(d.text){st.textContent=d.text;const curS=JSON.parse(localStorage.getItem('ns_ord')||'{}');curS.status=d.text;saveState(curS);}
+      if(d.st==='canc'||d.st==='done'){resetOrderUI(d.text||'Заказ завершён');}
     }catch{}
-  };
+  },3000);
+}
+function resetOrderUI(msg){
+  if(pollTmr){clearInterval(pollTmr);pollTmr=null;}
+  actId=null;carPt=null;saveState(null);draw();
+  const btn=document.getElementById('obtn');btn.className='go';btn.textContent='Заказать такси';
+  if(msg)st.textContent=msg;
+}
+async function sendMaxOrder(id,tn,route,ph){
+  const body={text:'🌐 ЗАКАЗ С САЙТА #'+id+' ('+tn+')\n🟢 Маршрут: '+route+'\n📱 Тел: '+ph,attachments:[{type:'inline_keyboard',payload:{buttons:[[{type:'callback',text:'✅ Принять заказ',payload:'mtake_'+id}]]}}]};
+  for(const uid of MAX_DRVS){
+    fetch(MAX_API+'&user_id='+Number(uid),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).catch(()=>{});
+  }
 }
 async function sendOrd(){
   const btn=document.getElementById('obtn');
   if(actId){
-    const oldId=actId;actId=null;carPt=null;draw();if(es){es.close();es=null;}
-    await fetch('https://ntfy.sh',{method:'POST',body:JSON.stringify({act:'canc',oid:oldId})});
-    await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:ADM,text:'🚫 Клиент отменил заказ с сайта #'+oldId})});
-    btn.className='go';btn.textContent='Заказать такси';st.textContent='Заказ отменён';return;
+    const oldId=actId;
+    fetch('https://ntfy.sh',{method:'POST',body:JSON.stringify({act:'canc',oid:oldId})}).catch(()=>{});
+    fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:ADM,text:'🚫 Клиент отменил заказ с сайта #'+oldId})}).catch(()=>{});
+    resetOrderUI('Заказ #'+oldId+' отменён');return;
   }
   const a=[];for(let i=0;i<pts.length;i++){const v=document.getElementById('in'+i).value.trim();if(v)a.push(v);}
   const ph=document.getElementById('phInp').value.trim();
@@ -82,12 +107,29 @@ async function sendOrd(){
   const tn=(tr===1?'Эконом':'Комфорт')+' ('+document.getElementById(tr===1?'p1':'p2').textContent+')';
   if(tg&&tg.initData){tg.sendData(JSON.stringify({fr:a.at(0),to:a.slice(1).join(' -> '),tar:tc,pr:document.getElementById(tr===1?'p1':'p2').textContent,ph:ph}));return;}
   actId=(Date.now()%9000+1000);
-  const fr=a.at(0),to=a.slice(1).join(' -> ');
-  await fetch('https://ntfy.sh',{method:'POST',body:JSON.stringify({act:'new',oid:actId,fr:fr,to:to,tn:tn,tc:tc,ph:ph})});
-  const txt='🌐 ЗАКАЗ С САЙТА #'+actId+' ('+tn+')\n📍 Маршрут: '+a.join(' -> ')+'\n📱 Тел: '+ph;
+  const fr=a.at(0),to=a.slice(1).join(' -> '),route=a.join(' -> ');
+  const stTxt='Заказ #'+actId+' отправлен водителям! Ищем машину...';
+  saveState({id:actId,fr:fr,to:to,ph:ph,status:stTxt});
+  fetch('https://ntfy.sh',{method:'POST',body:JSON.stringify({act:'new',oid:actId,fr:fr,to:to,tn:tn,tc:tc,ph:ph})}).catch(()=>{});
+  sendMaxOrder(actId,tn,route,ph);
+  const txt='🌐 ЗАКАЗ С САЙТА #'+actId+' ('+tn+')\n📍 Маршрут: '+route+'\n📱 Тел: '+ph;
   await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:ADM,text:txt,reply_markup:{inline_keyboard:[[{text:'✅ Принять заказ',callback_data:'wtake_'+actId}]]}})});
-  listenOrder(actId);
-  btn.className='canc';btn.textContent='❌ Отменить заказ #'+actId;st.textContent='Заказ #'+actId+' отправлен водителям! Ищем машину...';
+  startPoll(actId);
+  btn.className='canc';btn.textContent='❌ Отменить заказ #'+actId;st.textContent=stTxt;
 }
+(function restore(){
+  try{
+    const saved=JSON.parse(localStorage.getItem('ns_ord')||'null');
+    if(saved&&saved.id){
+      actId=saved.id;
+      if(saved.fr)document.getElementById('in0').value=saved.fr;
+      if(saved.to)document.getElementById('in1').value=saved.to;
+      if(saved.ph)document.getElementById('phInp').value=saved.ph;
+      const btn=document.getElementById('obtn');btn.className='canc';btn.textContent='❌ Отменить заказ #'+actId;
+      st.textContent=saved.status||('Активен заказ #'+actId);
+      startPoll(actId);
+    }
+  }catch{}
+})();
 window.addEventListener('resize',draw);draw();
 </script></body></html>
