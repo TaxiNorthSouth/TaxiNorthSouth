@@ -38,7 +38,7 @@ function draw(){
   if(carPt){const cp=l2t(carPt.lat,carPt.lon,z),cd=document.createElement('div');cd.className='p';cd.textContent='🚕';cd.style.left=(W/2+(cp.x-c.x)*256)+'px';cd.style.top=(H/2+(cp.y-c.y)*256)+'px';pins.appendChild(cd);}
   pts.forEach((p,i)=>{if(!p)return;const tp=l2t(p.lat,p.lon,z),d=document.createElement('div');d.className='p';d.textContent=i===0?'🟢':(i===pts.length-1?'🔴':'🟡');d.style.left=(W/2+(tp.x-c.x)*256)+'px';d.style.top=(H/2+(tp.y-c.y)*256)+'px';pins.appendChild(d);});
   if(!carPt)freeCars.forEach(c=>{const tp=l2t(c.la,c.lo,z),d=document.createElement('div');d.className='p';d.style.zIndex='400';d.innerHTML='🚕<div style="font-size:9px;background:#fff;padding:1px 3px;border-radius:3px;white-space:nowrap">'+c.c+'</div>';d.style.left=(W/2+(tp.x-c.x)*256)+'px';d.style.top=(H/2+(tp.y-c.y)*256)+'px';pins.appendChild(d);});
-document.getElementById('st2').textContent='v28 z'+z;calc();
+document.getElementById('st2').textContent='v29 z'+z;calc();
 }
 function setT(v){tr=v;document.getElementById('t1').classList.toggle('on',v===1);document.getElementById('t2').classList.toggle('on',v===2);}
 function zm(d){z=Math.max(11,Math.min(18,z+d));draw();}
@@ -164,7 +164,7 @@ window.addEventListener('resize',draw);draw();
   <button onclick="document.getElementById('cabModal').style.display='none'" style='border:none;background:#e2e8f0;color:#334155;border-radius:50%;width:32px;height:32px;font-weight:700;cursor:pointer'>✕</button>
 </div>
 <div style='display:flex;gap:8px;margin-bottom:14px'>
-  <input id='cabPh' type='search' autocomplete='off' placeholder='Номер +7...' style='flex:1;padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:12px;font-size:15px;background:#fff;outline:none'>
+  <input id='cabPh' type='text' inputmode='tel' readonly onfocus="this.removeAttribute('readonly')" autocomplete='off' placeholder='Номер +7...' style='flex:1;padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:12px;font-size:15px;background:#fff;outline:none'>
   <button onclick='loadCab()' style='padding:10px 16px;border:none;border-radius:12px;background:#facc15;color:#0f172a;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 2px 6px rgba(250,204,21,.4)'>Найти</button>
 </div>
 <div id='cabBody'></div>
