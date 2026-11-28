@@ -34,7 +34,7 @@ function draw(){
   if(carPt){const cp=l2t(carPt.lat,carPt.lon,z),cd=document.createElement('div');cd.className='p';cd.textContent='🚕';cd.style.left=(W/2+(cp.x-c.x)*256)+'px';cd.style.top=(H/2+(cp.y-c.y)*256)+'px';pins.appendChild(cd);}
   pts.forEach((p,i)=>{if(!p)return;const tp=l2t(p.lat,p.lon,z),d=document.createElement('div');d.className='p';d.textContent=i===0?'🟢':(i===pts.length-1?'🔴':'🟡');d.style.left=(W/2+(tp.x-c.x)*256)+'px';d.style.top=(H/2+(tp.y-c.y)*256)+'px';pins.appendChild(d);});
   if(!carPt)freeCars.forEach(c=>{const tp=l2t(c.la,c.lo,z),d=document.createElement('div');d.className='p';d.style.zIndex='400';d.innerHTML='🚕<div style="font-size:9px;background:#fff;padding:1px 3px;border-radius:3px;white-space:nowrap">'+c.c+'</div>';d.style.left=(W/2+(tp.x-c.x)*256)+'px';d.style.top=(H/2+(tp.y-c.y)*256)+'px';pins.appendChild(d);});
-document.getElementById('st2').textContent='v20 z'+z;calc();
+document.getElementById('st2').textContent='v21 z'+z;calc();
 }
 function setT(v){tr=v;document.getElementById('t1').classList.toggle('on',v===1);document.getElementById('t2').classList.toggle('on',v===2);}
 function zm(d){z=Math.max(11,Math.min(18,z+d));draw();}
@@ -71,7 +71,7 @@ async function sendCh(obj){
   if(!j.ok)throw new Error(j.description||'TG error');
 }
 async function syncChannel(){try{const r=await fetch(TG_BASE+'getChat?chat_id='+SYNC_CH+'&t='+Date.now());const j=await r.json();if(!j.ok||!j.result||!j.result.description)return;const cur=JSON.parse(j.result.description);if(cur.fleet){document.getElementById('fcnt').textContent='• 🟢 На линии: '+cur.fleet.cnt;freeCars=cur.fleet.cars||[];if(!carPt)draw();}if(!actId)return;const d=cur['taxi_ns_out_'+actId];if(!d)return;if(d.lat&&d.lon){carPt={lat:d.lat,lon:d.lon};draw();}if(d.text){st.textContent=d.text;const curS=JSON.parse(localStorage.getItem('ns_ord')||'{}');curS.status=d.text;saveState(curS);}if(d.st==='riding'){const b=document.getElementById('obtn');if(b)b.style.display='none';}if(d.st==='canc'||d.st==='done'){resetOrderUI(d.text||'Заказ завершён');}}catch{}}
-function startPoll(id){lockOrderUI(true);if(pollTmr)clearInterval(pollTmr);syncChannel();pollTmr=setInterval(syncChannel,2500);}
+function startPoll(id){lockOrderUI(true);if(pts&&pts[0]){cLat=pts[0].lat;cLon=pts[0].lon;z=16;draw();}if(pollTmr)clearInterval(pollTmr);syncChannel();pollTmr=setInterval(syncChannel,2500);}
 setInterval(syncChannel,3000);syncChannel();
 function lockOrderUI(lk){document.querySelectorAll('#ptsBox input,#ptsBox button,button[onclick="addPt()"],button[onclick="getGps()"],#t1,#t2,#t3,#phInp').forEach(el=>{el.disabled=lk;el.style.opacity=lk?'0.5':'1';});}
 function resetOrderUI(msg){lockOrderUI(false);const b=document.getElementById('obtn');if(b)b.style.display='';
