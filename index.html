@@ -107,7 +107,12 @@ async function syncChannel(){try{const r=await fetch(TG_BASE+'getChat?chat_id='+
 function startPoll(id){lockOrderUI(true);if(pts&&pts[0]){cLat=pts[0].lat;cLon=pts[0].lon;z=16;draw();}if(pollTmr)clearInterval(pollTmr);syncChannel();pollTmr=setInterval(syncChannel,2500);}
 setInterval(syncChannel,3000);syncChannel();
 function lockOrderUI(lk){document.querySelectorAll('#ptsBox input,#ptsBox button,button[onclick="addPt()"],button[onclick="getGps()"],#t1,#t2,#t3,#phInp').forEach(el=>{el.disabled=lk;el.style.opacity=lk?'0.5':'1';});}
-function resetOrderUI(msg){lockOrderUI(false);const b=document.getElementById('obtn');if(b)b.style.display='';
+function unlockRideEdit(){
+  document.querySelectorAll('#ptsBox input,#ptsBox button,button[onclick="addPt()"]').forEach(el=>{if(el.id!=='in0'){el.disabled=false;el.style.opacity='1';}});
+  const btn=document.getElementById('obtn');
+  if(btn){btn.style.display='';btn.disabled=false;btn.dataset.mode='chg';btn.className='go';btn.textContent='✏️ Изменить маршрут';}
+}
+function resetOrderUI(msg){lockOrderUI(false);const _b=document.getElementById('obtn');if(_b){delete _b.dataset.mode;_b.disabled=false;}const b=document.getElementById('obtn');if(b)b.style.display='';
   if(pollTmr){clearInterval(pollTmr);pollTmr=null;}
   actId=null;carPt=null;saveState(null);draw();
   const btn=document.getElementById('obtn');btn.className='go';btn.textContent='Заказать такси';
@@ -118,6 +123,16 @@ async function sendOrd(){
 if(!actId)await ensureCoords();
   const btn=document.getElementById('obtn');
   if(actId){
+    const b=document.getElementById('obtn');
+    if(b&&b.dataset.mode==='chg'){
+      const a=[];for(let i=1;i<pts.length;i++){const v=document.getElementById('in'+i).value.trim();if(v)a.push(v);}
+      const newTo=a.join(' -> ');
+      if(!newTo)return alert('Укажите новый адрес Куда!');
+      await sendCh({act:'chg',oid:actId,to:newTo}).catch(()=>{});
+      st.textContent='⏳ Запрос на смену маршрута отправлен водителю...';
+      b.disabled=true;setTimeout(()=>{if(b)b.disabled=false;},4000);
+      return;
+    }
     const oldId=actId;
     await sendCh({act:'canc',oid:oldId}).catch(()=>{});
     resetOrderUI('Заказ #'+oldId+' отменён');return;
