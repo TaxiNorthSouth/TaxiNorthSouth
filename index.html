@@ -26,6 +26,7 @@ const w=document.getElementById('w'),ly=document.getElementById('ly'),pins=docum
 
 function l2t(la,lo,zm){const n=1<<zm,r=la*Math.PI/180;return{x:(lo+180)/360*n,y:(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n};}
 function t2l(x,y,zm){const n=1<<zm,r=Math.atan(Math.sinh(Math.PI*(1-2*y/n)));return{lat:r*180/Math.PI,lon:x/n*360-180};}
+let freeCars=[];
 function draw(){
   const W=w.clientWidth||320,H=w.clientHeight||240,c=l2t(cLat,cLon,z),m=1<<z;ly.innerHTML='';
   for(let x=Math.floor(c.x-W/512);x<=Math.floor(c.x+W/512);x++)for(let y=Math.floor(c.y-H/512);y<=Math.floor(c.y+H/512);y++){
