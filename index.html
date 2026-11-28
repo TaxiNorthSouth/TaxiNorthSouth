@@ -38,7 +38,7 @@ function draw(){
   if(carPt){const cp=l2t(carPt.lat,carPt.lon,z),cd=document.createElement('div');cd.className='p';cd.textContent='🚕';cd.style.left=(W/2+(cp.x-c.x)*256)+'px';cd.style.top=(H/2+(cp.y-c.y)*256)+'px';pins.appendChild(cd);}
   pts.forEach((p,i)=>{if(!p)return;const tp=l2t(p.lat,p.lon,z),d=document.createElement('div');d.className='p';d.textContent=i===0?'🟢':(i===pts.length-1?'🔴':'🟡');d.style.left=(W/2+(tp.x-c.x)*256)+'px';d.style.top=(H/2+(tp.y-c.y)*256)+'px';pins.appendChild(d);});
   if(!carPt)freeCars.forEach(c=>{const tp=l2t(c.la,c.lo,z),d=document.createElement('div');d.className='p';d.style.zIndex='400';d.innerHTML='🚕<div style="font-size:9px;background:#fff;padding:1px 3px;border-radius:3px;white-space:nowrap">'+c.c+'</div>';d.style.left=(W/2+(tp.x-c.x)*256)+'px';d.style.top=(H/2+(tp.y-c.y)*256)+'px';pins.appendChild(d);});
-document.getElementById('st2').textContent='v29 z'+z;calc();
+document.getElementById('st2').textContent='v30 z'+z;calc();
 }
 function setT(v){tr=v;document.getElementById('t1').classList.toggle('on',v===1);document.getElementById('t2').classList.toggle('on',v===2);}
 function zm(d){z=Math.max(11,Math.min(18,z+d));draw();}
