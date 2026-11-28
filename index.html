@@ -7,7 +7,7 @@
 </head>
 <body><div class=c><div style="text-align:center;font-weight:800;font-size:16px;margin-bottom:6px">🚕 Такси «Север-Юг» <span id='fcnt' style='font-size:12px;color:#2e7d32;font-weight:600'>• 🟢 Машин на линии: ...</span> <button onclick='openCab()' style='padding:3px 8px;border-radius:8px;border:1px solid #ccc;background:#fff;font-size:12px;font-weight:700;cursor:pointer'>👤 Кабинет</button></div>
 <div id=st style="text-align:center;font-weight:700;margin-bottom:6px;font-size:13px">Укажите адреса маршрута</div>
-<div id=w><div id=ly style="position:absolute;inset:0"></div><div id=pins></div><div style="position:absolute;right:6px;top:6px;z-index:9"><button onclick="zm(1)">+</button><button onclick="zm(-1)">-</button></div><div id=st2>v12</div></div>
+<div id=w><div id=ly style="position:absolute;inset:0"></div><div id=pins></div><div style="position:absolute;right:6px;top:6px;z-index:9"><button onclick="zm(1)">+</button><button onclick="zm(-1)">-</button></div><div id=st2>v31</div></div>
 <div id=ptsBox><div class=ir><input id=in0 class=inp placeholder="🟢 Откуда (улица, дом)"><button class=sbtn onclick="findAdr(0)">🔍</button></div><div class=ir><input id=in1 class=inp placeholder="🔴 Куда (улица, дом)"><button class=sbtn onclick="findAdr(1)">🔍</button></div></div>
 <div class=r><button class=b onclick="addPt()">➕ Добавить точку</button><button class=b onclick="getGps()">📍 Мой GPS</button></div>
 <div class=ir><input id=phInp class=inp type=tel placeholder="📱 Ваш телефон"></div>
@@ -38,7 +38,7 @@ function draw(){
   if(carPt){const cp=l2t(carPt.lat,carPt.lon,z),cd=document.createElement('div');cd.className='p';cd.textContent='🚕';cd.style.left=(W/2+(cp.x-c.x)*256)+'px';cd.style.top=(H/2+(cp.y-c.y)*256)+'px';pins.appendChild(cd);}
   pts.forEach((p,i)=>{if(!p)return;const tp=l2t(p.lat,p.lon,z),d=document.createElement('div');d.className='p';d.textContent=i===0?'🟢':(i===pts.length-1?'🔴':'🟡');d.style.left=(W/2+(tp.x-c.x)*256)+'px';d.style.top=(H/2+(tp.y-c.y)*256)+'px';pins.appendChild(d);});
   if(!carPt)freeCars.forEach(c=>{const tp=l2t(c.la,c.lo,z),d=document.createElement('div');d.className='p';d.style.zIndex='400';d.innerHTML='🚕<div style="font-size:9px;background:#fff;padding:1px 3px;border-radius:3px;white-space:nowrap">'+c.c+'</div>';d.style.left=(W/2+(tp.x-c.x)*256)+'px';d.style.top=(H/2+(tp.y-c.y)*256)+'px';pins.appendChild(d);});
-document.getElementById('st2').textContent='v30 z'+z;calc();
+document.getElementById('st2').textContent='v31 z'+z;calc();
 }
 function setT(v){tr=v;document.getElementById('t1').classList.toggle('on',v===1);document.getElementById('t2').classList.toggle('on',v===2);}
 function zm(d){z=Math.max(11,Math.min(18,z+d));draw();}
@@ -112,7 +112,8 @@ function unlockRideEdit(){
   const btn=document.getElementById('obtn');
   if(btn){btn.style.display='';btn.disabled=false;btn.dataset.mode='chg';btn.className='go';btn.textContent='✏️ Изменить маршрут';}
 }
-function resetOrderUI(msg){lockOrderUI(false);const _b=document.getElementById('obtn');if(_b){delete _b.dataset.mode;_b.disabled=false;}const b=document.getElementById('obtn');if(b)b.style.display='';
+function unlockRideEdit(){document.querySelectorAll('#ptsBox input,#ptsBox button,button[onclick="addPt()"]').forEach(e=>{if(e.id!=='in0'){e.disabled=false;e.style.opacity='1';}});const b=document.getElementById('obtn');if(b){b.style.display='';b.disabled=false;b.dataset.mode='chg';b.className='go';b.textContent='✏️ Изменить маршрут';}}
+function resetOrderUI(msg){lockOrderUI(false);const _b=document.getElementById('obtn');if(_b){delete _b.dataset.mode;_b.disabled=false;}const _b=document.getElementById('obtn');if(_b){delete _b.dataset.mode;_b.disabled=false;}const b=document.getElementById('obtn');if(b)b.style.display='';
   if(pollTmr){clearInterval(pollTmr);pollTmr=null;}
   actId=null;carPt=null;saveState(null);draw();
   const btn=document.getElementById('obtn');btn.className='go';btn.textContent='Заказать такси';
@@ -133,7 +134,7 @@ if(!actId)await ensureCoords();
       b.disabled=true;setTimeout(()=>{if(b)b.disabled=false;},4000);
       return;
     }
-    const oldId=actId;
+    const b=document.getElementById('obtn');if(b&&b.dataset.mode==='chg'){const a=[];for(let i=1;i<pts.length;i++){const v=document.getElementById('in'+i).value.trim();if(v)a.push(v);}const nt=a.join(' -> ');if(!nt)return alert('Укажите новый адрес!');await sendCh({act:'chg',oid:actId,to:nt}).catch(()=>{});st.textContent='⏳ Запрос отправлен...';b.disabled=true;setTimeout(()=>{if(b)b.disabled=false;},4000);return;}const oldId=actId;
     await sendCh({act:'canc',oid:oldId}).catch(()=>{});
     resetOrderUI('Заказ #'+oldId+' отменён');return;
   }
