@@ -106,14 +106,13 @@ async function sendCh(obj){
 async function syncChannel(){try{const r=await fetch(TG_BASE+'getChat?chat_id='+SYNC_CH+'&t='+Date.now());const j=await r.json();if(!j.ok||!j.result||!j.result.description)return;const cur=JSON.parse(j.result.description);if(cur.fleet){document.getElementById('fcnt').textContent='• 🟢 На линии: '+cur.fleet.cnt;freeCars=cur.fleet.cars||[];if(!carPt)draw();}if(!actId)return;const d=cur['taxi_ns_out_'+actId];if(!d)return;if(d.lat&&d.lon){carPt={lat:d.lat,lon:d.lon};draw();}if(d.text){st.textContent=d.text;const curS=JSON.parse(localStorage.getItem('ns_ord')||'{}');curS.status=d.text;saveState(curS);}if(d.st==='arr'&&d.arr_ts){startWebWait(d.arr_ts,d.free_m||2,d.rate||5);}if(d.st==='riding'){if(waitTmr){clearInterval(waitTmr);waitTmr=null;}unlockRideEdit();}if(d.st==='canc'||d.st==='done'){resetOrderUI(d.text||'Заказ завершён');}}catch{}}
 function startPoll(id){lockOrderUI(true);if(pts&&pts[0]){cLat=pts[0].lat;cLon=pts[0].lon;z=16;draw();}if(pollTmr)clearInterval(pollTmr);syncChannel();pollTmr=setInterval(syncChannel,2500);}
 setInterval(syncChannel,3000);syncChannel();
-function lockOrderUI(lk){document.querySelectorAll('#ptsBox input,#ptsBox button,button[onclick="addPt()"],button[onclick="getGps()"],#t1,#t2,#t3,#phInp').forEach(el=>{el.disabled=lk;el.style.opacity=lk?'0.5':'1';});}
+function lockOrderUI(lk){document.querySelectorAll('#ptsBox input,#ptsBox button,.add-pt,button[onclick="getGps()"],#t1,#t2,#t3,#phInp').forEach(el=>{el.disabled=lk;el.style.opacity=lk?'0.5':'1';});}
 function unlockRideEdit(){
-  document.querySelectorAll('#ptsBox input,#ptsBox button,button[onclick="addPt()"]').forEach(el=>{if(el.id!=='in0'){el.disabled=false;el.style.opacity='1';}});
+  document.querySelectorAll('#ptsBox input,#ptsBox button,.add-pt').forEach(el=>{if(el.id!=='in0'){el.disabled=false;el.style.opacity='1';}});
   const btn=document.getElementById('obtn');
   if(btn){btn.style.display='';btn.disabled=false;btn.dataset.mode='chg';btn.className='go';btn.textContent='✏️ Изменить маршрут';}
 }
-function unlockRideEdit(){document.querySelectorAll('#ptsBox input,#ptsBox button,button[onclick="addPt()"]').forEach(e=>{if(e.id!=='in0'){e.disabled=false;e.style.opacity='1';}});const b=document.getElementById('obtn');if(b){b.style.display='';b.disabled=false;b.dataset.mode='chg';b.className='go';b.textContent='✏️ Изменить маршрут';}}
-function resetOrderUI(msg){lockOrderUI(false);const _b=document.getElementById('obtn');if(_b){delete _b.dataset.mode;_b.disabled=false;}const _b=document.getElementById('obtn');if(_b){delete _b.dataset.mode;_b.disabled=false;}const b=document.getElementById('obtn');if(b)b.style.display='';
+function resetOrderUI(msg){lockOrderUI(false);const _b=document.getElementById('obtn');if(_b){delete _b.dataset.mode;_b.disabled=false;}const b=document.getElementById('obtn');if(b)b.style.display='';
   if(pollTmr){clearInterval(pollTmr);pollTmr=null;}
   actId=null;carPt=null;saveState(null);draw();
   const btn=document.getElementById('obtn');btn.className='go';btn.textContent='Заказать такси';
@@ -124,16 +123,6 @@ async function sendOrd(){
 if(!actId)await ensureCoords();
   const btn=document.getElementById('obtn');
   if(actId){
-    const b=document.getElementById('obtn');
-    if(b&&b.dataset.mode==='chg'){
-      const a=[];for(let i=1;i<pts.length;i++){const v=document.getElementById('in'+i).value.trim();if(v)a.push(v);}
-      const newTo=a.join(' -> ');
-      if(!newTo)return alert('Укажите новый адрес Куда!');
-      await sendCh({act:'chg',oid:actId,to:newTo}).catch(()=>{});
-      st.textContent='⏳ Запрос на смену маршрута отправлен водителю...';
-      b.disabled=true;setTimeout(()=>{if(b)b.disabled=false;},4000);
-      return;
-    }
     const b=document.getElementById('obtn');if(b&&b.dataset.mode==='chg'){const a=[];for(let i=1;i<pts.length;i++){const v=document.getElementById('in'+i).value.trim();if(v)a.push(v);}const nt=a.join(' -> ');if(!nt)return alert('Укажите новый адрес!');await sendCh({act:'chg',oid:actId,to:nt}).catch(()=>{});st.textContent='⏳ Запрос отправлен...';b.disabled=true;setTimeout(()=>{if(b)b.disabled=false;},4000);return;}const oldId=actId;
     await sendCh({act:'canc',oid:oldId}).catch(()=>{});
     resetOrderUI('Заказ #'+oldId+' отменён');return;
