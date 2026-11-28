@@ -38,7 +38,7 @@ function draw(){
   if(carPt){const cp=l2t(carPt.lat,carPt.lon,z),cd=document.createElement('div');cd.className='p';cd.textContent='🚕';cd.style.left=(W/2+(cp.x-c.x)*256)+'px';cd.style.top=(H/2+(cp.y-c.y)*256)+'px';pins.appendChild(cd);}
   pts.forEach((p,i)=>{if(!p)return;const tp=l2t(p.lat,p.lon,z),d=document.createElement('div');d.className='p';d.textContent=i===0?'🟢':(i===pts.length-1?'🔴':'🟡');d.style.left=(W/2+(tp.x-c.x)*256)+'px';d.style.top=(H/2+(tp.y-c.y)*256)+'px';pins.appendChild(d);});
   if(!carPt)freeCars.forEach(c=>{const tp=l2t(c.la,c.lo,z),d=document.createElement('div');d.className='p';d.style.zIndex='400';d.innerHTML='🚕<div style="font-size:9px;background:#fff;padding:1px 3px;border-radius:3px;white-space:nowrap">'+c.c+'</div>';d.style.left=(W/2+(tp.x-c.x)*256)+'px';d.style.top=(H/2+(tp.y-c.y)*256)+'px';pins.appendChild(d);});
-document.getElementById('st2').textContent='v23 z'+z;calc();
+document.getElementById('st2').textContent='v25 z'+z;calc();
 }
 function setT(v){tr=v;document.getElementById('t1').classList.toggle('on',v===1);document.getElementById('t2').classList.toggle('on',v===2);}
 function zm(d){z=Math.max(11,Math.min(18,z+d));draw();}
@@ -128,13 +128,76 @@ if(!actId)await ensureCoords();
   }catch{}
 })();
 window.addEventListener('resize',draw);draw();
-</script><div id='cabModal' style='display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99;padding:12px;overflow:auto'><div style='background:#fff;border-radius:14px;max-width:440px;margin:20px auto;padding:14px'><div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px'><b>👤 Личный кабинет</b><button onclick="document.getElementById('cabModal').style.display='none'" style='border:none;background:#eee;border-radius:8px;padding:4px 10px;font-weight:700'>✕</button></div><div style='display:flex;gap:6px;margin-bottom:10px'><input id='cabPh' placeholder='Ваш телефон (+7...)' style='flex:1;padding:8px;border:1px solid #ccc;border-radius:8px'><button onclick='loadCab()' style='padding:8px 12px;border:none;border-radius:8px;background:#fc0;font-weight:700'>Открыть</button></div><div id='cabBody' style='font-size:13px;line-height:1.4'>Введите номер телефона и нажмите «Открыть»</div></div></div>
+</script><div id='cabModal' style='display:none;position:fixed;inset:0;background:rgba(15,23,42,.65);backdrop-filter:blur(4px);z-index:99;padding:12px;overflow:auto'>
+<div style='background:#f8fafc;border-radius:20px;max-width:440px;margin:16px auto;padding:16px;box-shadow:0 20px 40px rgba(0,0,0,.25);font-family:sans-serif'>
+<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:12px'>
+  <div style='font-size:18px;font-weight:800;color:#0f172a'>👤 Личный кабинет</div>
+  <button onclick="document.getElementById('cabModal').style.display='none'" style='border:none;background:#e2e8f0;color:#334155;border-radius:50%;width:32px;height:32px;font-weight:700;cursor:pointer'>✕</button>
+</div>
+<div style='display:flex;gap:8px;margin-bottom:14px'>
+  <input id='cabPh' type='tel' autocomplete='off' name='no_autofill_ph' placeholder='Ваш телефон (+7...)' style='flex:1;padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:12px;font-size:15px;background:#fff;outline:none'>
+  <button onclick='loadCab()' style='padding:10px 16px;border:none;border-radius:12px;background:#facc15;color:#0f172a;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 2px 6px rgba(250,204,21,.4)'>Найти</button>
+</div>
+<div id='cabBody'></div>
+</div></div>
 <script>
-function startWebWait(ats,fm,rt){if(waitTmr)clearInterval(waitTmr);waitTmr=setInterval(()=>{const el=Math.floor(Date.now()/1000-ats);const fsec=fm*60;if(el<=fsec){const r=fsec-el;st.textContent=`📍 Водитель на месте! Бесплатно: ${Math.floor(r/60)}:${String(r%60).padStart(2,'0')}`;}else{const pm=Math.min(10-fm,Math.ceil((el-fsec)/60));st.textContent=`⏳ Платное ожидание: ${pm} мин (+${pm*rt} ₽)`;}} ,1000);}
-function unlockRideEdit(){if(editRide)return;editRide=true;const b=document.getElementById('obtn');if(b)b.style.display='none';document.querySelectorAll('#ptsBox input,#ptsBox button,button[onclick="addPt()"]').forEach(el=>{if(el.id!=='in0'){el.disabled=false;el.style.opacity='1';}});if(!document.getElementById('edRtBtn')){const nb=document.createElement('button');nb.id='edRtBtn';nb.textContent='✏️ Применить новый маршрут';nb.style.cssText='width:100%;padding:12px;border:none;border-radius:10px;background:#4caf50;color:#fff;font-weight:700;font-size:15px;margin-top:6px';nb.onclick=sendEditedRoute;b.parentNode.insertBefore(nb,b);}}
-async function sendEditedRoute(){
-await ensureCoords();const a=[];for(let i=0;i<pts.length;i++){const v=document.getElementById('in'+i).value.trim();if(v)a.push(v);}if(a.length<2)return alert('Укажите конечный адрес!');calc();const tn=(tr===1?'Эконом':'Комфорт')+' ('+document.getElementById(tr===1?'p1':'p2').textContent+')';await sendCh({act:'edit',oid:actId,to:a.slice(1).join(' → '),tn:tn,km:rKm,min:rMin,pkm:rKm>0?Math.round((parseInt(tn.replace(/\D/g,''))||150)/rKm*10)/10:150});st.textContent='✅ Запрос на изменение маршрута отправлен водителю';}
 function openCab(){const m=document.getElementById('cabModal');m.style.display='block';const p=(document.getElementById('phInp')||{}).value||localStorage.getItem('ns_ph')||'';if(p){document.getElementById('cabPh').value=p;loadCab();}}
-async function loadCab(){const ph=document.getElementById('cabPh').value.trim();if(!ph)return;localStorage.setItem('ns_ph',ph);const b=document.getElementById('cabBody');b.innerHTML='⏳ Загружаем данные...';const rid=Date.now()%100000;await fetch(TG_BASE+'sendMessage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:SYNC_CH,text:JSON.stringify({act:'cab',rid:rid,ph:ph})})});for(let i=0;i<8;i++){await new Promise(r=>setTimeout(r,1200));try{const r=await fetch(TG_BASE+'getChat?chat_id='+SYNC_CH+'&t='+Date.now());const j=await r.json();const cur=JSON.parse(j.result.description||'{}');const d=cur['cab_'+rid];if(d){let out='';if(d.d){out+=`<div style='background:#fff9db;padding:8px;border-radius:8px;margin-bottom:10px'><b>🚕 Кабинет водителя (${d.d.n})</b><br>Месяц: ${d.d.y}<br>✅ Выполнено: <b>${d.d.ok}</b> | ❌ Отменено: <b>${d.d.no}</b><br>💰 Итого за месяц: <b>${d.d.s} ₽</b></div>`;}out+=`<b>🧾 Последние поездки пассажира</b>`;if(!d.p||!d.p.length)out+='<div>Поездок по этому номеру пока нет.</div>';else out+=d.p.map(x=>`<div style='border-bottom:1px solid #eee;padding:6px 0'>${x}</div>`).join('');b.innerHTML=out;return;}}catch(e){}}b.innerHTML='Не удалось получить ответ от бота. Попробуйте ещё раз.';}
+function repTrip(fr,to){document.getElementById('cabModal').style.display='none';pts=[null,null];renderPts();if(document.getElementById('in0'))document.getElementById('in0').value=fr;if(document.getElementById('in1'))document.getElementById('in1').value=to;if(typeof ensureCoords==='function')ensureCoords();}
+async function loadCab(){
+  const ph=document.getElementById('cabPh').value.trim();if(!ph)return;localStorage.setItem('ns_ph',ph);
+  const b=document.getElementById('cabBody');b.innerHTML='<div style="text-align:center;padding:24px;color:#64748b">⏳ Загружаем профиль...</div>';
+  const rid=Date.now()%100000;
+  await fetch(TG_BASE+'sendMessage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:SYNC_CH,text:JSON.stringify({act:'cab',rid:rid,ph:ph})})});
+  for(let i=0;i<8;i++){
+    await new Promise(r=>setTimeout(r,1100));
+    try{
+      const r=await fetch(TG_BASE+'getChat?chat_id='+SYNC_CH+'&t='+Date.now());
+      const j=await r.json();const cur=JSON.parse(j.result.description||'{}');const d=cur['cab_'+rid];
+      if(d){
+        let out='';
+        if(d.d){
+          const avg=d.d.ok>0?Math.round(d.d.s/d.d.ok):0;
+          const pct=(d.d.ok+d.d.no)>0?Math.round(d.d.ok*100/(d.d.ok+d.d.no)):100;
+          out+=`<div style='background:linear-gradient(135deg,#1e293b,#0f172a);color:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 8px 20px rgba(15,23,42,.2)'>
+            <div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px'>
+              <span style='font-size:13px;color:#94a3b8'>🚕 Профиль водителя</span>
+              <span style='background:#facc15;color:#0f172a;font-size:11px;font-weight:800;padding:3px 8px;border-radius:20px'>${d.d.n} • ${d.d.y}</span>
+            </div>
+            <div style='font-size:30px;font-weight:900;letter-spacing:-0.5px;margin-bottom:12px'>${d.d.s} ₽ <span style='font-size:13px;font-weight:400;color:#94a3b8'>за месяц</span></div>
+            <div style='display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;background:rgba(255,255,255,.08);border-radius:12px;padding:10px;text-align:center'>
+              <div><div style='font-size:16px;font-weight:800;color:#4ade80'>${d.d.ok}</div><div style='font-size:11px;color:#cbd5e1'>Выполнено</div></div>
+              <div><div style='font-size:16px;font-weight:800;color:#f87171'>${d.d.no}</div><div style='font-size:11px;color:#cbd5e1'>Отменено</div></div>
+              <div><div style='font-size:16px;font-weight:800;color:#facc15'>${avg} ₽</div><div style='font-size:11px;color:#cbd5e1'>Ср. чек</div></div>
+            </div>
+            <div style='margin-top:10px;font-size:11px;color:#94a3b8;display:flex;justify-content:space-between'><span>Успешность поездок</span><span>${pct}%</span></div>
+            <div style='height:5px;background:rgba(255,255,255,.15);border-radius:4px;margin-top:4px;overflow:hidden'><div style='height:100%;width:${pct}%;background:#4ade80'></div></div>
+          </div>`;
+        }
+        out+=`<div style='font-size:14px;font-weight:800;color:#1e293b;margin-bottom:8px'>🧾 История поездок пассажира</div>`;
+        if(!d.p||!d.p.length){out+=`<div style='background:#fff;border-radius:14px;padding:16px;text-align:center;color:#64748b;border:1px solid #e2e8f0'>По этому номеру поездок пока нет</div>`;}
+        else{
+          const stM={done:['✅ Выполнен','#dcfce7','#166534'],canc:['❌ Отменён','#fee2e2','#991b1b'],riding:['▶️ В пути','#dbeafe','#1e40af'],acc:['🚕 Едет','#fef9c3','#854d0e'],search:['🔍 Поиск','#f1f5f9','#475569']};
+          out+=d.p.map(x=>{
+            const st=stM[x[4]]||[x[4],'#f1f5f9','#475569'];
+            return `<div style='background:#fff;border-radius:14px;padding:12px;margin-bottom:8px;border:1px solid #e2e8f0;box-shadow:0 2px 6px rgba(0,0,0,.03)'>
+              <div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:6px'>
+                <span style='font-weight:800;color:#0f172a;font-size:13px'>Заказ #${x[0]}</span>
+                <span style='background:${st[1]};color:${st[2]};font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px'>${st[0]}</span>
+              </div>
+              <div style='font-size:13px;color:#334155;margin-bottom:3px'>🟢 ${x[1]}</div>
+              <div style='font-size:13px;color:#334155;margin-bottom:8px'>🔴 ${x[2]}</div>
+              <div style='display:flex;justify-content:space-between;align-items:center;border-top:1px dashed #e2e8f0;padding-top:8px'>
+                <span style='font-weight:800;color:#0f172a;font-size:13px'>${x[3]}</span>
+                <button onclick="repTrip('${x[1].replace(/'/g,'')}','${x[2].replace(/'/g,'')}')" style='border:none;background:#f1f5f9;color:#0f172a;font-size:12px;font-weight:700;padding:5px 10px;border-radius:8px;cursor:pointer'>🔄 Повторить</button>
+              </div>
+            </div>`;
+          }).join('');
+        }
+        b.innerHTML=out;return;
+      }
+    }catch(e){}
+  }
+  b.innerHTML='<div style="text-align:center;padding:16px;color:#ef4444">Бот не ответил вовремя. Нажмите «Найти» ещё раз.</div>';
+}
 </script>
 </body></html>
